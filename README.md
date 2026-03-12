@@ -68,11 +68,12 @@ Each scenario builds on the previous one. Start with Scenario 1 and progress fro
 
 The pattern every scenario follows:
 
-```
-setup.ps1          → Provision Azure resources (azd init + provision)
-dotnet run         → Test locally on localhost:8088
-deploy.ps1         → Build container, push to ACR, deploy to Foundry
-cleanup.ps1        → Tear down all Azure resources
+```powershell
+cd scenario-1-intro   # Navigate to the scenario folder first
+setup.ps1             → Provision Azure resources (azd init + provision)
+dotnet run            → Test locally on localhost:8088
+deploy.ps1            → Build container, push to ACR, deploy to Foundry
+cleanup.ps1           → Tear down all Azure resources
 ```
 
 ### Prerequisites
