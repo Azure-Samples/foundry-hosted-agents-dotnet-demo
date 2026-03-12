@@ -1,0 +1,27 @@
+name: data-crunch-agent
+description: >
+  A hosted agent that analyzes CSV data using statistical tools.
+  Parses data, computes statistics, and detects outliers using real C# code.
+metadata:
+  authors:
+    - Microsoft
+  tags:
+    - Azure AI AgentServer
+    - Microsoft Agent Framework
+    - Data Analysis
+    - Statistics
+template:
+  name: data-crunch-agent
+  kind: hosted
+  protocols:
+    - protocol: responses
+      version: v1
+  environment_variables:
+    - name: AZURE_OPENAI_ENDPOINT
+      value: ${AZURE_OPENAI_ENDPOINT}
+    - name: AZURE_OPENAI_DEPLOYMENT_NAME
+      value: "{{chat}}"
+resources:
+  - kind: model
+    id: gpt-5-mini
+    name: chat

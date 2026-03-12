@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/scenario-1-intro/" />
+  <Folder Name="/scenario-1-intro/src/">
+    <Project Path="scenario-1-intro/src/HostedAgent/HostedAgent.csproj" />
+  </Folder>
+  <Folder Name="/scenario-2-data-crunch/" />
+  <Folder Name="/scenario-2-data-crunch/src/">
+    <Project Path="scenario-2-data-crunch/src/DataCrunch.AppHost/DataCrunch.AppHost.csproj" />
+    <Project Path="scenario-2-data-crunch/src/DataCrunch.ServiceDefaults/DataCrunch.ServiceDefaults.csproj" />
+    <Project Path="scenario-2-data-crunch/src/DataCrunch.Web/DataCrunch.Web.csproj" />
+    <Project Path="scenario-2-data-crunch/src/DataCrunchAgent/DataCrunchAgent.csproj" />
+  </Folder>
+</Solution>

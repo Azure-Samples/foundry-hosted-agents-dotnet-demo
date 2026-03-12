@@ -1,0 +1,31 @@
+/* Data Crunch Agent — Custom Styles */
+
+.analysis-content {
+    line-height: 1.8;
+    font-size: 0.95rem;
+}
+
+.analysis-content p {
+    margin-bottom: 0.75rem;
+}
+
+.analysis-content pre,
+.analysis-content code {
+    background-color: #f8f9fa;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.85em;
+}
+
+.analysis-content pre {
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}

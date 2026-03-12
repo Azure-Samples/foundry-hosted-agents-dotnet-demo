@@ -1,0 +1,29 @@
+{
+  "name": "Foundry Hosted Agents Demo",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/azure/azure-dev/azd:0": {}
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [5000, 8088, 15888],
+  "portsAttributes": {
+    "5000": { "label": "Blazor Frontend", "onAutoForward": "notify" },
+    "8088": { "label": "Hosted Agent", "onAutoForward": "notify" },
+    "15888": { "label": "Aspire Dashboard", "onAutoForward": "notify" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-azuretools.azure-dev",
+        "humao.rest-client"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "foundry-hosted-agents-dotnet-demo.slnx"
+      }
+    }
+  }
+}

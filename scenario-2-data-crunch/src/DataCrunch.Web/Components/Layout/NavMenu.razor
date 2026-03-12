@@ -1,0 +1,12 @@
+@inject IConfiguration Config
+
+<div class="d-flex align-items-center gap-3">
+    <NavLink class="nav-link text-light" href="/">Home</NavLink>
+    <NavLink class="nav-link text-light" href="/analyze">Analyze</NavLink>
+    @{
+        var mode = Config["AgentMode"] ?? "Local";
+        var badge = mode == "Local" ? "🟢 Local Agent" : "☁️ Cloud Agent";
+        var badgeClass = mode == "Local" ? "bg-success" : "bg-info";
+    }
+    <span class="badge @badgeClass">@badge</span>
+</div>

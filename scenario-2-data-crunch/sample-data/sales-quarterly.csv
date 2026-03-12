@@ -1,0 +1,25 @@
+quarter,region,product,revenue,units_sold
+Q1-2025,North,Widget A,125000,520
+Q1-2025,North,Widget B,89000,310
+Q1-2025,South,Widget A,98000,410
+Q1-2025,South,Widget B,76000,280
+Q1-2025,East,Widget A,142000,590
+Q1-2025,East,Widget B,104000,375
+Q1-2025,West,Widget A,31000,95
+Q1-2025,West,Widget B,28000,82
+Q2-2025,North,Widget A,134000,555
+Q2-2025,North,Widget B,91000,320
+Q2-2025,South,Widget A,105000,435
+Q2-2025,South,Widget B,82000,300
+Q2-2025,East,Widget A,151000,625
+Q2-2025,East,Widget B,112000,400
+Q2-2025,West,Widget A,33000,100
+Q2-2025,West,Widget B,25000,75
+Q3-2025,North,Widget A,128000,530
+Q3-2025,North,Widget B,87000,305
+Q3-2025,South,Widget A,101000,420
+Q3-2025,South,Widget B,79000,290
+Q3-2025,East,Widget A,147000,610
+Q3-2025,East,Widget B,108000,385
+Q3-2025,West,Widget A,29000,88
+Q3-2025,West,Widget B,22000,68

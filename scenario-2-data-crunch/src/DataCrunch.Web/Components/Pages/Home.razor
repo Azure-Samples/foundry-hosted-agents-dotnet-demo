@@ -1,0 +1,63 @@
+@page "/"
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="mb-4">📊 Data Crunch Agent</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">What is this?</h5>
+                <p class="card-text">
+                    A <strong>Microsoft Foundry hosted agent</strong> that analyzes your CSV data using real C# code.
+                    Upload a file, and the agent will parse it, compute statistics, and detect outliers — all powered
+                    by function tools running server-side.
+                </p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <h1>📋</h1>
+                        <h6>Parse Data</h6>
+                        <small class="text-muted">Detect columns, count rows, preview data</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <h1>📈</h1>
+                        <h6>Compute Statistics</h6>
+                        <small class="text-muted">Mean, median, std dev, percentiles</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <h1>🔍</h1>
+                        <h6>Detect Outliers</h6>
+                        <small class="text-muted">IQR method with statistical fences</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="/analyze" class="btn btn-primary btn-lg">
+                🚀 Start Analyzing
+            </a>
+        </div>
+
+        <hr class="my-4" />
+
+        <h5>How It Works</h5>
+        <pre class="bg-light p-3 rounded"><code>Upload CSV → Agent parses data → Computes statistics → Detects outliers → Returns narrative</code></pre>
+        <p class="text-muted small">
+            The agent uses <code>gpt-5-mini</code> to orchestrate three C# function tools.
+            All computation happens server-side — the model decides which tools to call, but the math is real code.
+        </p>
+    </div>
+</div>

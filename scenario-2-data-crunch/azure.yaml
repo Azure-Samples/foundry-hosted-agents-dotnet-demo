@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: foundry-hosted-agents-datacrunch
+metadata:
+  template: foundry-hosted-agents-dotnet-demo
+
+requiredVersions:
+  extensions:
+    azure.ai.agents: ">=0.1.0-preview"
+
+services:
+  DataCrunchAgent:
+    project: scenario-2-data-crunch/src/DataCrunchAgent
+    host: azure.ai.agent
+    language: docker
+    docker:
+      remoteBuild: true
+    config:
+      container:
+        resources:
+          cpu: "1"
+          memory: 2Gi
+        scale:
+          maxReplicas: 3
+          minReplicas: 1
+      deployments:
+        - model:
+            format: OpenAI
+            name: gpt-5-mini
+            version: "2025-04-14"
+          name: gpt-5-mini
+          sku:
+            capacity: 10
+            name: GlobalStandard
+
+infra:
+  provider: bicep
+  path: ./infra
+  module: main

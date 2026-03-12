@@ -1,0 +1,31 @@
+# Hosted agent definition for Microsoft Foundry
+name: image-generator-agent
+description: >
+  A GPU-powered hosted agent that generates images from text descriptions
+  using Stable Diffusion (local ONNX/GPU) and FLUX.2 (Microsoft Foundry cloud).
+metadata:
+  authors:
+    - Microsoft
+  tags:
+    - Azure AI AgentServer
+    - Microsoft Agent Framework
+    - Local Tools
+    - Image Generation
+    - GPU
+template:
+  name: image-generator-agent
+  kind: hosted
+  protocols:
+    - protocol: responses
+      version: v1
+  environment_variables:
+    - name: AZURE_OPENAI_ENDPOINT
+      value: ${AZURE_OPENAI_ENDPOINT}
+    - name: AZURE_OPENAI_DEPLOYMENT_NAME
+      value: "{{chat}}"
+    - name: AZURE_AI_FOUNDRY_PROJECT_ENDPOINT
+      value: ${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}
+resources:
+  - kind: model
+    id: gpt-5-mini
+    name: chat

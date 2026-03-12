@@ -1,0 +1,145 @@
+@page "/analyze"
+@using DataCrunch.Web.Services
+@inject AgentService Agent
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h2 class="mb-4">📊 Analyze CSV Data</h2>
+
+        @* File Upload Section *@
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload CSV File</h5>
+                <div class="mb-3">
+                    <InputFile OnChange="OnFileSelected" accept=".csv" class="form-control" disabled="@isLoading" />
+                </div>
+
+                @if (fileName is not null)
+                {
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="badge bg-secondary">📄 @fileName</span>
+                        <span class="text-muted small">@FormatSize(fileSize)</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(csvPreview))
+                {
+                    <details class="mb-3">
+                        <summary class="text-muted">Preview (first 5 lines)</summary>
+                        <pre class="bg-light p-2 rounded mt-2 small">@csvPreview</pre>
+                    </details>
+                }
+
+                <button class="btn btn-primary" @onclick="AnalyzeData" disabled="@(isLoading || csvContent is null)">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <span>Crunching your data...</span>
+                    }
+                    else
+                    {
+                        <span>🔬 Analyze</span>
+                    }
+                </button>
+
+                @if (errorMessage is not null)
+                {
+                    <div class="alert alert-danger mt-3">@errorMessage</div>
+                }
+            </div>
+        </div>
+
+        @* Results Section *@
+        @if (result is not null)
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">✅ Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-content">
+                        @((MarkupString)FormatAnalysis(result.Analysis))
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string? fileName;
+    private long fileSize;
+    private string? csvContent;
+    private string? csvPreview;
+    private bool isLoading;
+    private string? errorMessage;
+    private AgentResponse? result;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        fileName = file.Name;
+        fileSize = file.Size;
+        result = null;
+        errorMessage = null;
+
+        // Read file content (max 1MB for demo)
+        using var reader = new StreamReader(file.OpenReadStream(maxAllowedSize: 1024 * 1024));
+        csvContent = await reader.ReadToEndAsync();
+
+        // Preview first 5 lines
+        var lines = csvContent.Split('\n').Take(6);
+        csvPreview = string.Join('\n', lines);
+    }
+
+    private async Task AnalyzeData()
+    {
+        if (csvContent is null) return;
+
+        isLoading = true;
+        errorMessage = null;
+        result = null;
+
+        try
+        {
+            result = await Agent.AnalyzeAsync(csvContent);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Analysis failed: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string FormatAnalysis(string analysis)
+    {
+        // Convert markdown-style formatting to HTML for display
+        var html = analysis
+            .Replace("\n\n", "</p><p>")
+            .Replace("\n", "<br/>")
+            .Replace("**", "<strong>")  // Simple bold (pairs)
+            ;
+
+        // Fix bold tags (pair them up)
+        var count = 0;
+        html = System.Text.RegularExpressions.Regex.Replace(html, "<strong>", m =>
+        {
+            count++;
+            return count % 2 == 1 ? "<strong>" : "</strong>";
+        });
+
+        return $"<p>{html}</p>";
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        const long KB = 1024;
+        const long MB = 1024 * 1024;
+        if (bytes < KB) return $"{bytes} B";
+        if (bytes < MB) return $"{bytes / (double)KB:F1} KB";
+        return $"{bytes / (double)MB:F1} MB";
+    }
+}
