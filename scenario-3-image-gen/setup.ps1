@@ -88,6 +88,39 @@ Write-Host "  ✅ Azure resources provisioned" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
+# 4b. Deploy the gpt-5-mini model
+# ============================================================
+Write-Host "Deploying gpt-5-mini model to Foundry..." -ForegroundColor Yellow
+
+$provisionEnv = azd env get-values 2>$null
+$acctName = $null
+$rgName = $null
+foreach ($line in $provisionEnv) {
+    if ($line -match '^\s*AZURE_AI_ACCOUNT_NAME\s*=\s*"?([^"]*)"?\s*$') { $acctName = $Matches[1] }
+    if ($line -match '^\s*AZURE_RESOURCE_GROUP\s*=\s*"?([^"]*)"?\s*$') { $rgName = $Matches[1] }
+}
+
+if ($acctName -and $rgName) {
+    az cognitiveservices account deployment create `
+        --name $acctName `
+        --resource-group $rgName `
+        --deployment-name gpt-5-mini `
+        --model-name gpt-5-mini `
+        --model-format OpenAI `
+        --sku-capacity 10 `
+        --sku-name GlobalStandard 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "⚠️  Model deployment returned non-zero. The model may already be deployed." -ForegroundColor Yellow
+    } else {
+        Write-Host "  ✅ gpt-5-mini model deployed" -ForegroundColor Green
+    }
+} else {
+    Write-Host "⚠️  Could not determine account name or resource group. Skipping model deployment." -ForegroundColor Yellow
+    Write-Host "   Deploy the model manually via Azure Portal or CLI." -ForegroundColor Yellow
+}
+Write-Host ""
+
+# ============================================================
 # 5. Register the agent definition
 # ============================================================
 $agentYaml = "$PSScriptRoot/src/HostedAgent/agent.yaml"
