@@ -70,7 +70,23 @@ if (-not (Test-Path ".azure")) {
 }
 
 # ============================================================
-# 4. Register the agent definition
+# 4. Provision Azure resources
+# ============================================================
+Write-Host "Provisioning Azure resources with 'azd provision'..." -ForegroundColor Yellow
+Write-Host "This creates the Foundry project, model deployment, ACR, and supporting services." -ForegroundColor DarkGray
+Write-Host ""
+
+azd provision
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ 'azd provision' failed." -ForegroundColor Red
+    exit 1
+}
+Write-Host ""
+Write-Host "  ✅ Azure resources provisioned" -ForegroundColor Green
+Write-Host ""
+
+# ============================================================
+# 5. Register the agent definition
 # ============================================================
 $agentYaml = "$PSScriptRoot/src/time-zone-agent/agent.yaml"
 if (Test-Path $agentYaml) {
@@ -87,22 +103,6 @@ if (Test-Path $agentYaml) {
     Write-Host "   Run this script again after the agent code is created." -ForegroundColor Yellow
     Write-Host ""
 }
-
-# ============================================================
-# 5. Provision Azure resources
-# ============================================================
-Write-Host "Provisioning Azure resources with 'azd provision'..." -ForegroundColor Yellow
-Write-Host "This creates the Foundry project, model deployment, ACR, and supporting services." -ForegroundColor DarkGray
-Write-Host ""
-
-azd provision
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ 'azd provision' failed." -ForegroundColor Red
-    exit 1
-}
-Write-Host ""
-Write-Host "  ✅ Azure resources provisioned" -ForegroundColor Green
-Write-Host ""
 
 # ============================================================
 # 6. Set .NET User Secrets from azd environment values
