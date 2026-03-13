@@ -13,6 +13,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Azure.AI.AgentServer.AgentFramework.Extensions;
 using Azure.AI.OpenAI;
+using Azure.Core;
 using Azure.Identity;
 using ElBruno.Text2Image;
 using ElBruno.Text2Image.Models;
@@ -29,8 +30,15 @@ var config = new ConfigurationBuilder()
 var endpoint = config["AZURE_OPENAI_ENDPOINT"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set. Run setup.ps1 or: dotnet user-secrets set AZURE_OPENAI_ENDPOINT <your-endpoint>");
 var deploymentName = config["AZURE_OPENAI_DEPLOYMENT_NAME"] ?? "gpt-5-mini";
+// Credential: AzureCliCredential for local dev (respects az login --tenant),
+// DefaultAzureCredential in containers (uses managed identity).
+TokenCredential credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+    ? new DefaultAzureCredential()
+    : new AzureCliCredential();
+
 Console.WriteLine($"Endpoint: {endpoint}");
 Console.WriteLine($"Model: {deploymentName}");
+Console.WriteLine($"Auth: {credential.GetType().Name}");
 
 // FUNCTION TOOLS — Three tools demonstrating GPU-backed server-side computation.
 // The model decides which tool to call based on user intent.
@@ -62,9 +70,8 @@ async Task<string> GenerateImageFlux(
         ?? throw new InvalidOperationException("AZURE_AI_FOUNDRY_PROJECT_ENDPOINT is required for FLUX.2. Run setup.ps1 or: dotnet user-secrets set AZURE_AI_FOUNDRY_PROJECT_ENDPOINT <your-endpoint>");
 
     // Call the Microsoft Foundry image generation endpoint
-    var credential = new DefaultAzureCredential();
     var token = await credential.GetTokenAsync(
-        new Azure.Core.TokenRequestContext(["https://cognitiveservices.azure.com/.default"]));
+        new Azure.Core.TokenRequestContext(["https://cognitiveservices.azure.com/.default"]), default);
 
     using var httpClient = new HttpClient();
     httpClient.DefaultRequestHeaders.Authorization =
@@ -103,7 +110,7 @@ static string ListModels()
 }
 
 // Build the chat client pipeline
-var chatClient = new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
+var chatClient = new AzureOpenAIClient(new Uri(endpoint), credential)
     .GetChatClient(deploymentName)
     .AsIChatClient()
     .AsBuilder()

@@ -102,9 +102,23 @@ cd scenario-1-intro        # Each scenario is self-contained
 
 Your agent runs on your machine as a regular .NET app. It connects to the Azure model deployments provisioned in Stage 1, but the agent code itself runs locally — fast iteration, full debugger support.
 
+**Important:** Before running, ensure you're logged into the correct Azure tenant:
+
+```powershell
+az login --tenant <your-tenant-id>   # Use the tenant shown at the end of setup.ps1
+```
+
 ```powershell
 cd src/HostedAgent
 dotnet run                 # Agent starts on http://localhost:8088
+```
+
+You'll see the credential type in the startup output:
+
+```
+Endpoint: https://<your-account>.openai.azure.com/
+Model: gpt-5-mini
+Auth: AzureCliCredential
 ```
 
 Test with any HTTP client:
@@ -182,13 +196,30 @@ cd scenario-1-intro
 | Docker Desktop | https://docs.docker.com/get-docker/ |
 | Azure subscription | With access to Microsoft Foundry |
 
+## Authentication
+
+All scenarios use a dual-credential strategy — no API keys or secrets anywhere:
+
+| Environment | Credential | How It Works |
+|-------------|-----------|--------------|
+| **Local dev** (`dotnet run`) | `AzureCliCredential` | Uses the token from `az login --tenant <id>`. Respects the tenant you logged into — no cross-tenant issues. |
+| **Container** (Docker / Foundry) | `DefaultAzureCredential` | Uses managed identity assigned to the container. Zero configuration needed. |
+
+The switch is automatic — .NET Docker images set `DOTNET_RUNNING_IN_CONTAINER=true`, so the code detects the environment at startup:
+
+```csharp
+TokenCredential credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+    ? new DefaultAzureCredential()    // Container: managed identity
+    : new AzureCliCredential();       // Local: az login token
+```
+
 ## Security
 
 > **From the official docs:** "Don't put secrets in container images or environment variables. Use managed identities and connections, and store secrets in a managed secret store."
 >
 > — [Microsoft Learn: Security and Data Handling](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents#security-and-data-handling)
 
-All scenarios in this repo use `DefaultAzureCredential` (managed identity) for authentication — no API keys or secrets in code. For production deployments, connect secrets through [Azure Key Vault](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/set-up-key-vault-connection).
+No API keys appear in code, config, or environment variables. Locally, `AzureCliCredential` uses your `az login` session. In containers, `DefaultAzureCredential` uses managed identity. For production secrets beyond auth, use [Azure Key Vault](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/set-up-key-vault-connection).
 
 ## Official Documentation
 

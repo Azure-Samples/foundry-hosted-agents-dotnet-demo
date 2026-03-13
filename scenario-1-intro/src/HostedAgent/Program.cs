@@ -5,11 +5,12 @@
 //   1. Function Tool    — GetCurrentDateTime() is a real C# method the model can call server-side
 //   2. Hosting Adapter  — RunAIAgentAsync() exposes this agent as an HTTP endpoint on port 8088
 //   3. Protocol Translation — The adapter converts Foundry Responses API ↔ Agent Framework automatically
-//   4. Agent Identity   — DefaultAzureCredential handles auth locally; managed identity in production
+//   4. Agent Identity   — AzureCliCredential locally (az login --tenant); DefaultAzureCredential in containers
 
 using System.ComponentModel;
 using Azure.AI.AgentServer.AgentFramework.Extensions;
 using Azure.AI.OpenAI;
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -24,8 +25,15 @@ var config = new ConfigurationBuilder()
 var endpoint = config["AZURE_OPENAI_ENDPOINT"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set. Run setup.ps1 or: dotnet user-secrets set AZURE_OPENAI_ENDPOINT <your-endpoint>");
 var deploymentName = config["AZURE_OPENAI_DEPLOYMENT_NAME"] ?? "gpt-5-mini";
+// Credential: AzureCliCredential for local dev (respects az login --tenant),
+// DefaultAzureCredential in containers (uses managed identity).
+TokenCredential credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+    ? new DefaultAzureCredential()
+    : new AzureCliCredential();
+
 Console.WriteLine($"Endpoint: {endpoint}");
 Console.WriteLine($"Model: {deploymentName}");
+Console.WriteLine($"Auth: {credential.GetType().Name}");
 
 // FUNCTION TOOL — This is the core value of a hosted agent. The model decides WHEN to call
 // this method, but the method runs real C# code server-side. No hallucinated results.
@@ -39,7 +47,7 @@ static string GetCurrentDateTime(
 }
 
 // Build the chat client pipeline
-var chatClient = new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
+var chatClient = new AzureOpenAIClient(new Uri(endpoint), credential)
     .GetChatClient(deploymentName)
     .AsIChatClient()
     .AsBuilder()
