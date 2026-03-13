@@ -75,7 +75,7 @@ if (-not (Test-Path ".azure")) {
 $agentYaml = "$PSScriptRoot/src/time-zone-agent/agent.yaml"
 if (Test-Path $agentYaml) {
     Write-Host "Registering agent definition from $agentYaml..." -ForegroundColor Yellow
-    azd ai agent init -m $agentYaml
+    azd ai agent init -m $agentYaml --no-prompt
     if ($LASTEXITCODE -ne 0) {
         Write-Host "⚠️  'azd ai agent init' returned non-zero. The agent may already be registered." -ForegroundColor Yellow
     } else {

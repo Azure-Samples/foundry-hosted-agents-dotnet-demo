@@ -8,6 +8,7 @@
 
 # Azure Developer CLI
 .azure/
+azure.yaml
 
 # .NET build output
 bin/
