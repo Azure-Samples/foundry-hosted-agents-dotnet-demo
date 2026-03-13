@@ -20,6 +20,17 @@ if (-not (Test-Path ".azure")) {
 }
 Write-Host "  ✅ .azure/ folder found" -ForegroundColor Green
 
+if (-not (Test-Path "$PSScriptRoot/azure.yaml")) {
+    Write-Host "❌ azure.yaml not found. Run setup.ps1 first." -ForegroundColor Red
+    exit 1
+}
+$yamlContent = Get-Content "$PSScriptRoot/azure.yaml" -Raw
+if ($yamlContent -notmatch 'services:') {
+    Write-Host "❌ azure.yaml has no 'services' section. Run setup.ps1 again to register the agent." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  ✅ azure.yaml found with services definition" -ForegroundColor Green
+
 if (-not (Test-Path "$PSScriptRoot/src/HostedAgent/Dockerfile")) {
     Write-Host "❌ src/HostedAgent/Dockerfile not found. The agent code must be created first." -ForegroundColor Red
     exit 1
