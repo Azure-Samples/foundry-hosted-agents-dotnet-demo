@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
+
+kind: hosted
+name: time-zone-agent
+description: |
+    A demo hosted agent that tells the current date and time in any timezone. Uses a local C# function tool with Microsoft Agent Framework.
+metadata:
+    authors:
+        - Microsoft
+    tags:
+        - Azure AI AgentServer
+        - Microsoft Agent Framework
+        - Local Tools
+        - Timezone
+protocols:
+    - protocol: responses
+      version: v1
+environment_variables:
+    - name: AZURE_OPENAI_ENDPOINT
+      value: ${AZURE_OPENAI_ENDPOINT}
+    - name: AZURE_OPENAI_DEPLOYMENT_NAME
+      value: gpt-5-mini

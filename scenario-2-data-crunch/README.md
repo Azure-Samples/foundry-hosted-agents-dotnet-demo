@@ -124,7 +124,7 @@ The Data Crunch Agent exposes three tools to the LLM:
 
 | Mode | How to run | Notes |
 |------|-----------|-------|
-| **Local** | `dotnet run --project src/DataCrunch.AppHost` | Uses Microsoft Foundry endpoint from `.env`; agent runs locally in a container |
+| **Local** | `dotnet run --project src/DataCrunch.AppHost` | Uses Microsoft Foundry endpoint from .NET User Secrets; agent runs locally in a container |
 | **Cloud** | `./deploy.ps1` | Deploys the agent container to Microsoft Foundry as a hosted agent |
 
 In both modes, the agent calls Azure OpenAI for LLM inference. The difference is where the agent container itself runs.
@@ -147,7 +147,7 @@ Remove all Azure resources and local configuration:
 ./cleanup.ps1
 ```
 
-This runs `azd down --purge --force` and removes the `.azure/` folder and `.env` file.
+This runs `azd down --purge --force` and removes the `.azure/` folder and clears .NET User Secrets.
 
 ## Project Structure
 
@@ -176,7 +176,7 @@ scenario-2-data-crunch/
 |---------|----------|
 | `dotnet workload list` doesn't show aspire | Run `dotnet workload install aspire` |
 | Blazor app won't load | Ensure the AppHost is running — it orchestrates all services |
-| Agent returns errors | Check that `.env` has valid `AZURE_AI_FOUNDRY_PROJECT_ENDPOINT` |
+| Agent returns errors | Check that .NET User Secrets has valid `AZURE_AI_FOUNDRY_PROJECT_ENDPOINT` (run `dotnet user-secrets list --project src/DataCrunchAgent/DataCrunchAgent.csproj`) |
 | Docker build fails | Ensure Docker Desktop is running and has sufficient resources |
 | `azd provision` fails | Verify your subscription has access to Microsoft Foundry in the selected region |
 

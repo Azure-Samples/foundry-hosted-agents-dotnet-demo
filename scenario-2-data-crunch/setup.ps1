@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # setup.ps1 — Automated setup for Data Crunch Agent
-# Provisions Azure infrastructure via azd and writes a local .env file.
+# Provisions Azure infrastructure via azd and configures .NET User Secrets.
 # Idempotent: safe to run multiple times.
 
 Set-StrictMode -Version Latest
@@ -84,7 +84,7 @@ if (-not (Test-Path ".azure")) {
 # ============================================================
 # 4. Register the agent definition
 # ============================================================
-$agentYaml = "scenario-2-data-crunch/src/DataCrunchAgent/agent.yaml"
+$agentYaml = "$PSScriptRoot/src/DataCrunchAgent/agent.yaml"
 if (Test-Path $agentYaml) {
     Write-Host "Registering agent definition from $agentYaml..." -ForegroundColor Yellow
     azd ai agent init -m $agentYaml
@@ -117,16 +117,16 @@ Write-Host "  ✅ Azure resources provisioned" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
-# 6. Write .env file from azd environment values
+# 6. Set .NET User Secrets from azd environment values
 # ============================================================
-Write-Host "Writing .env file from azd environment..." -ForegroundColor Yellow
+Write-Host "Configuring .NET User Secrets from azd environment..." -ForegroundColor Yellow
 
+$csprojPath = "$PSScriptRoot/src/DataCrunchAgent/DataCrunchAgent.csproj"
 $envValues = azd env get-values 2>$null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "⚠️  Could not read azd environment values. Skipping .env generation." -ForegroundColor Yellow
+    Write-Host "⚠️  Could not read azd environment values. Skipping User Secrets configuration." -ForegroundColor Yellow
 } else {
-    # Parse azd env output (KEY="VALUE" format) and write useful values to .env
-    $envContent = @()
+    # Parse azd env output (KEY="VALUE" format)
     $envMap = @{}
 
     foreach ($line in $envValues) {
@@ -137,7 +137,7 @@ if ($LASTEXITCODE -ne 0) {
         }
     }
 
-    # Write the variables the agent needs
+    # Set user secrets for the variables the agent needs
     $keysToWrite = @(
         "AZURE_OPENAI_ENDPOINT",
         "AZURE_OPENAI_DEPLOYMENT_NAME",
@@ -147,24 +147,26 @@ if ($LASTEXITCODE -ne 0) {
         "AZURE_LOCATION"
     )
 
+    $secretsSet = 0
     foreach ($key in $keysToWrite) {
-        if ($envMap.ContainsKey($key)) {
-            $envContent += "$key=$($envMap[$key])"
+        if ($envMap.ContainsKey($key) -and $envMap[$key]) {
+            dotnet user-secrets set --project $csprojPath $key $envMap[$key] > $null 2>&1
+            if ($LASTEXITCODE -eq 0) { $secretsSet++ }
         }
     }
 
     # Also include any other AZURE_ variables not already covered
     foreach ($key in ($envMap.Keys | Sort-Object)) {
         if ($key -like "AZURE_*" -and $key -notin $keysToWrite -and $envMap[$key]) {
-            $envContent += "$key=$($envMap[$key])"
+            dotnet user-secrets set --project $csprojPath $key $envMap[$key] > $null 2>&1
+            if ($LASTEXITCODE -eq 0) { $secretsSet++ }
         }
     }
 
-    if ($envContent.Count -gt 0) {
-        $envContent | Set-Content -Path ".env" -Encoding utf8
-        Write-Host "  ✅ .env file written ($($envContent.Count) variables)" -ForegroundColor Green
+    if ($secretsSet -gt 0) {
+        Write-Host "  ✅ User Secrets configured ($secretsSet values set)" -ForegroundColor Green
     } else {
-        Write-Host "  ⚠️  No environment variables found to write." -ForegroundColor Yellow
+        Write-Host "  ⚠️  No environment variables found to set." -ForegroundColor Yellow
     }
 }
 Write-Host ""

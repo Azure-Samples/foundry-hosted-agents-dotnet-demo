@@ -19,12 +19,8 @@ if (-not (Test-Path ".azure")) {
 }
 Write-Host "  ✅ .azure/ folder found" -ForegroundColor Green
 
-if (-not (Test-Path ".env")) {
-    Write-Host "⚠️  .env file not found. Run setup.ps1 first (or it may have been cleaned up)." -ForegroundColor Yellow
-}
-
-if (-not (Test-Path "scenario-1-intro/src/HostedAgent/Dockerfile")) {
-    Write-Host "❌ scenario-1-intro/src/HostedAgent/Dockerfile not found. The agent code must be created first." -ForegroundColor Red
+if (-not (Test-Path "$PSScriptRoot/src/time-zone-agent/Dockerfile")) {
+    Write-Host "❌ src/time-zone-agent/Dockerfile not found. The agent code must be created first." -ForegroundColor Red
     exit 1
 }
 Write-Host "  ✅ Dockerfile found" -ForegroundColor Green
