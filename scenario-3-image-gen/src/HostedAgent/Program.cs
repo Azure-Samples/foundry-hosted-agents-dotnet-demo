@@ -18,11 +18,17 @@ using ElBruno.Text2Image;
 using ElBruno.Text2Image.Models;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 
-// Configuration from environment variables
-var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
-    ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
-var deploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT_NAME") ?? "gpt-5-mini";
+// Configuration from User Secrets (local dev) + environment variables (deployed container)
+var config = new ConfigurationBuilder()
+    .AddEnvironmentVariables()
+    .AddUserSecrets<Program>(optional: true)
+    .Build();
+
+var endpoint = config["AZURE_OPENAI_ENDPOINT"]
+    ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set. Run setup.ps1 or: dotnet user-secrets set AZURE_OPENAI_ENDPOINT <your-endpoint>");
+var deploymentName = config["AZURE_OPENAI_DEPLOYMENT_NAME"] ?? "gpt-5-mini";
 Console.WriteLine($"Endpoint: {endpoint}");
 Console.WriteLine($"Model: {deploymentName}");
 
@@ -49,11 +55,11 @@ static async Task<string> GenerateImage(
 }
 
 [Description("Generates a high-quality image using FLUX.2 via Microsoft Foundry cloud endpoint")]
-static async Task<string> GenerateImageFlux(
+async Task<string> GenerateImageFlux(
     [Description("Text description of the image to generate")] string prompt)
 {
-    var foundryEndpoint = Environment.GetEnvironmentVariable("AZURE_AI_FOUNDRY_PROJECT_ENDPOINT")
-        ?? throw new InvalidOperationException("AZURE_AI_FOUNDRY_PROJECT_ENDPOINT is required for FLUX.2");
+    var foundryEndpoint = config["AZURE_AI_FOUNDRY_PROJECT_ENDPOINT"]
+        ?? throw new InvalidOperationException("AZURE_AI_FOUNDRY_PROJECT_ENDPOINT is required for FLUX.2. Run setup.ps1 or: dotnet user-secrets set AZURE_AI_FOUNDRY_PROJECT_ENDPOINT <your-endpoint>");
 
     // Call the Microsoft Foundry image generation endpoint
     var credential = new DefaultAzureCredential();

@@ -45,7 +45,7 @@ This will:
 2. Pull the azd Foundry starter template (`azd init`)
 3. Register the agent definition from `src/HostedAgent/agent.yaml`
 4. Provision Azure resources (`azd provision`)
-5. Write a `.env` file with your endpoints
+5. Configure .NET User Secrets with your endpoints
 
 Then log in to the correct tenant (the script prints the command):
 
@@ -119,7 +119,7 @@ This builds the Docker container, pushes it to Azure Container Registry, and cre
 ./cleanup.ps1
 ```
 
-Deletes all Azure resources (`azd down --purge --force`), removes `.azure/`, `.env`, and generated images.
+Deletes all Azure resources (`azd down --purge --force`), removes `.azure/`, clears .NET User Secrets, and removes generated images.
 
 ---
 

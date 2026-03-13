@@ -64,17 +64,113 @@ Each scenario builds on the previous one. Start with Scenario 1 and progress fro
 
 ## Quick Start
 
-**➡️ [Start with Scenario 1 — Intro](scenario-1-intro/)** — it walks you through the complete flow in about 5 minutes.
+**➡️ [Start with Scenario 1 — Intro](scenario-1-intro/)** — it walks you through the complete workflow in about 5 minutes.
 
-The pattern every scenario follows:
+### Agent Development Workflow
+
+Building a hosted agent follows five stages. Each scenario in this repo follows this exact pattern — you work locally first, then deploy when ready.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                  Agent Development Workflow                      │
+│                                                                  │
+│   Stage 1          Stage 2           Stage 3          Stage 4    │
+│  ┌─────────┐    ┌───────────┐    ┌────────────┐   ┌──────────┐  │
+│  │ Provision│───▶│ Run & Test│───▶│  Package & │──▶│ Test on  │  │
+│  │ Azure    │    │ Locally   │    │  Deploy    │   │ Foundry  │  │
+│  └─────────┘    └───────────┘    └────────────┘   └──────────┘  │
+│                                                        │         │
+│                                          Stage 5 ──────┘         │
+│                                         ┌──────────┐             │
+│                                         │ Cleanup  │             │
+│                                         └──────────┘             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+#### Stage 1 — Provision Azure Resources
+
+Set up the cloud infrastructure your agent needs: a Foundry project, model deployments (e.g. `gpt-5-mini`), Azure Container Registry, and supporting services. This only needs to run once per environment.
 
 ```powershell
-cd scenario-1-intro   # Navigate to the scenario folder first
-setup.ps1             → Provision Azure resources (azd init + provision)
-dotnet run            → Test locally on localhost:8088
-deploy.ps1            → Build container, push to ACR, deploy to Foundry
-cleanup.ps1           → Tear down all Azure resources
+cd scenario-1-intro        # Each scenario is self-contained
+./setup.ps1                # Runs azd init + azd provision + configures .NET User Secrets
 ```
+
+> `setup.ps1` also stores all Azure endpoints and configuration as [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) so you can run the agent locally without environment variables or `.env` files.
+
+#### Stage 2 — Run & Test Locally
+
+Your agent runs on your machine as a regular .NET app. It connects to the Azure model deployments provisioned in Stage 1, but the agent code itself runs locally — fast iteration, full debugger support.
+
+```powershell
+cd src/HostedAgent
+dotnet run                 # Agent starts on http://localhost:8088
+```
+
+Test with any HTTP client:
+
+```http
+POST http://localhost:8088/responses
+Content-Type: application/json
+
+{
+  "model": "TimeZoneAgent",
+  "input": "What time is it in Tokyo?"
+}
+```
+
+This is where you spend most of your development time — writing code, adding tools, testing prompts. No container builds, no deployments.
+
+#### Stage 3 — Package & Deploy to Foundry
+
+When your agent works locally, package it as a Docker container and push it to Microsoft Foundry. The `deploy.ps1` script builds the container image, pushes it to Azure Container Registry, and creates the hosted agent deployment.
+
+```powershell
+cd scenario-1-intro
+./deploy.ps1               # docker build → ACR push → azd deploy
+```
+
+Behind the scenes, this runs:
+
+```
+azd deploy                 # Build container → push to ACR → deploy to Foundry
+```
+
+#### Stage 4 — Test on Foundry
+
+Your agent is now running as a hosted agent on Microsoft-managed infrastructure. Test it using the same Responses API — this time routed through Foundry.
+
+```http
+POST https://<your-foundry-endpoint>/responses
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "model": "TimeZoneAgent",
+  "input": "What time is it in London?"
+}
+```
+
+The [test.http](scenario-1-intro/test.http) file in each scenario has ready-to-use requests for both local and deployed testing.
+
+#### Stage 5 — Cleanup (Optional)
+
+When you're done, tear down all Azure resources to avoid charges.
+
+```powershell
+cd scenario-1-intro
+./cleanup.ps1              # azd down --purge --force + clear User Secrets
+```
+
+### Command Summary
+
+| Stage | Script / Command | What It Does |
+|-------|-----------------|--------------|
+| **1. Provision** | `./setup.ps1` | `azd init` + `azd provision` + configure .NET User Secrets |
+| **2. Local test** | `dotnet run` | Run agent on `localhost:8088` — fast iteration |
+| **3. Deploy** | `./deploy.ps1` | Docker build → ACR push → `azd deploy` to Foundry |
+| **4. Cloud test** | `test.http` | Test the deployed agent via Foundry Responses API |
+| **5. Cleanup** | `./cleanup.ps1` | `azd down --purge` + clear secrets + remove local state |
 
 ### Prerequisites
 
@@ -85,19 +181,6 @@ cleanup.ps1           → Tear down all Azure resources
 | Azure CLI (`az`) | https://learn.microsoft.com/cli/azure/install-azure-cli |
 | Docker Desktop | https://docs.docker.com/get-docker/ |
 | Azure subscription | With access to Microsoft Foundry |
-
-### Deployment Flow
-
-This repo uses the [Azure Developer CLI (`azd`) agent extension](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/extensions/azure-ai-foundry-extension) for deployment:
-
-```
-azd init -t azd-ai-starter-basic     # Pull Foundry starter template
-azd ai agent init -m agent.yaml      # Register agent definition
-azd provision                         # Create Azure infrastructure
-azd deploy                            # Build container → push to ACR → deploy
-```
-
-Or use `azd up` to provision and deploy in one step.
 
 ## Security
 

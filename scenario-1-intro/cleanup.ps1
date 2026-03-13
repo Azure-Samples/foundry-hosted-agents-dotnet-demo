@@ -40,14 +40,15 @@ if (Test-Path ".azure") {
     Write-Host ".azure/ folder removed." -ForegroundColor Green
 }
 
-# --- Delete .env file ---
-if (Test-Path ".env") {
-    Write-Host "🗑️  Removing .env file..." -ForegroundColor Yellow
-    Remove-Item -Path ".env" -Force
-    $cleanedUp += "✅ .env file removed"
-    Write-Host ".env file removed." -ForegroundColor Green
+# --- Clear .NET User Secrets ---
+$csprojPath = "$PSScriptRoot/src/HostedAgent/HostedAgent.csproj"
+if (Test-Path $csprojPath) {
+    Write-Host "🗑️  Clearing .NET User Secrets..." -ForegroundColor Yellow
+    dotnet user-secrets clear --project $csprojPath > $null 2>&1
+    $cleanedUp += "✅ .NET User Secrets cleared"
+    Write-Host "User Secrets cleared." -ForegroundColor Green
 } else {
-    Write-Host "ℹ️  No .env file found — nothing to remove." -ForegroundColor DarkGray
+    Write-Host "ℹ️  Project file not found — skipping User Secrets cleanup." -ForegroundColor DarkGray
 }
 
 # --- Print cleanup summary ---

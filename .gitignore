@@ -9,9 +9,6 @@
 # Azure Developer CLI
 .azure/
 
-# Environment variables
-.env
-
 # .NET build output
 bin/
 obj/
