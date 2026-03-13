@@ -68,6 +68,9 @@ if (-not (Test-Path ".azure")) {
     Write-Host "Initializing azd project with Foundry starter template..." -ForegroundColor Yellow
     Write-Host "You will be prompted to select an environment name, subscription, and location." -ForegroundColor DarkGray
     Write-Host ""
+    Write-Host "  ⚠️  azd will warn that the directory is not empty." -ForegroundColor Yellow
+    Write-Host "     Select YES to continue — the template files merge with the existing repo." -ForegroundColor Yellow
+    Write-Host ""
 
     azd init -t Azure-Samples/azd-ai-starter-basic
     if ($LASTEXITCODE -ne 0) {
