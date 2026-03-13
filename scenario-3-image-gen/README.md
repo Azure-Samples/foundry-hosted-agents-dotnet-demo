@@ -1,5 +1,7 @@
 # Image Generator Agent — GPU-Powered Hosted Agent (.NET)
 
+> 🚧 **Work in Progress** — This scenario is under active development. Code and documentation may be incomplete or change without notice.
+
 A .NET 10 hosted agent that generates images from text descriptions using GPU-accelerated **Stable Diffusion 1.5** (local) and cloud-based **FLUX.2** (Microsoft Foundry). Orchestrated by gpt-5-mini via the Microsoft Agent Framework.
 
 > **Prerequisites:** Complete [Scenario 1](../scenario-1-intro/) first to understand the basic hosted agent pattern. This scenario adds GPU workload profiles on top of the same architecture.

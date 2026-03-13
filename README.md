@@ -57,8 +57,8 @@ Each scenario builds on the previous one. Start with Scenario 1 and progress fro
 | # | Scenario | Complexity | What It Teaches |
 |---|----------|-----------|----------------|
 | **1** | [**Intro — Time Zone Agent**](scenario-1-intro/) | 🟢 Beginner | The hosted agent pattern: one function tool, hosting adapter, local test, deploy. **Start here.** |
-| **2** | [**Data Crunch Agent**](scenario-2-data-crunch/) | 🟡 Intermediate | Multi-tool agent with Blazor frontend and .NET Aspire orchestration. CSV analysis with real statistics. |
-| **3** | [**Image Generator Agent**](scenario-3-image-gen/) | 🔴 Advanced (GPU) | GPU-powered image generation using Stable Diffusion and FLUX.2. Serverless GPU workload profiles. |
+| **2** | [**Data Crunch Agent**](scenario-2-data-crunch/) | 🟡 Intermediate | 🚧 **WIP** — Multi-tool agent with Blazor frontend and .NET Aspire orchestration. CSV analysis with real statistics. |
+| **3** | [**Image Generator Agent**](scenario-3-image-gen/) | 🔴 Advanced (GPU) | 🚧 **WIP** — GPU-powered image generation using Stable Diffusion and FLUX.2. Serverless GPU workload profiles. |
 
 > 📖 See [docs/SCENARIOS.md](docs/SCENARIOS.md) for the full scenario design catalog, including three additional proposed scenarios.
 
@@ -75,10 +75,10 @@ Building a hosted agent follows five stages. Each scenario in this repo follows 
 │                  Agent Development Workflow                      │
 │                                                                  │
 │   Stage 1          Stage 2           Stage 3          Stage 4    │
-│  ┌─────────┐    ┌───────────┐    ┌────────────┐   ┌──────────┐  │
-│  │ Provision│───▶│ Run & Test│───▶│  Package & │──▶│ Test on  │  │
+│  ┌──────────┐    ┌───────────┐    ┌────────────┐   ┌──────────┐  │
+│  │ Provision│───>│ Run & Test│───>│  Package & │──>│ Test on  │  │
 │  │ Azure    │    │ Locally   │    │  Deploy    │   │ Foundry  │  │
-│  └─────────┘    └───────────┘    └────────────┘   └──────────┘  │
+│  └──────────┘    └───────────┘    └────────────┘   └──────────┘  │
 │                                                        │         │
 │                                          Stage 5 ──────┘         │
 │                                         ┌──────────┐             │

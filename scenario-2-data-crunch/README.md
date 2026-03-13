@@ -1,5 +1,7 @@
 # Scenario 2 — Data Crunch Agent (End-to-End Application)
 
+> 🚧 **Work in Progress** — This scenario is under active development. Code and documentation may be incomplete or change without notice.
+
 <!-- demo gif goes here -->
 
 The **Data Crunch Agent** is a full-stack application that analyzes CSV data using an AI-powered hosted agent. Upload a CSV file through the Blazor web frontend, and the agent parses the data, computes statistics, detects outliers, and returns a structured analysis — all orchestrated by .NET Aspire.
