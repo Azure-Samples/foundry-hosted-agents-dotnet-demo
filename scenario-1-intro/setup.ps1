@@ -69,7 +69,7 @@ if (-not (Test-Path ".azure")) {
 # ============================================================
 # 4. Register the agent definition
 # ============================================================
-$agentYaml = "$PSScriptRoot/src/HostedAgent/agent.yaml"
+$agentYaml = "$PSScriptRoot/src/time-zone-agent/agent.yaml"
 if (Test-Path $agentYaml) {
     Write-Host "Registering agent definition from $agentYaml..." -ForegroundColor Yellow
     azd ai agent init -m $agentYaml
@@ -106,7 +106,7 @@ Write-Host ""
 # ============================================================
 Write-Host "Configuring .NET User Secrets from azd environment..." -ForegroundColor Yellow
 
-$csprojPath = "$PSScriptRoot/src/HostedAgent/HostedAgent.csproj"
+$csprojPath = "$PSScriptRoot/src/time-zone-agent/HostedAgent.csproj"
 $envValues = azd env get-values 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  Could not read azd environment values. Skipping User Secrets configuration." -ForegroundColor Yellow
@@ -186,6 +186,6 @@ Write-Host "✅ Setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Run the az login command shown above" -ForegroundColor White
-Write-Host "  2. cd scenario-1-intro/src/HostedAgent && dotnet run" -ForegroundColor White
+Write-Host "  2. cd scenario-1-intro/src/time-zone-agent && dotnet run" -ForegroundColor White
 Write-Host "  3. Test with: POST http://localhost:8088/responses" -ForegroundColor White
 Write-Host ""

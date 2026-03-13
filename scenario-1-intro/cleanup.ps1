@@ -41,7 +41,7 @@ if (Test-Path ".azure") {
 }
 
 # --- Clear .NET User Secrets ---
-$csprojPath = "$PSScriptRoot/src/HostedAgent/HostedAgent.csproj"
+$csprojPath = "$PSScriptRoot/src/time-zone-agent/HostedAgent.csproj"
 if (Test-Path $csprojPath) {
     Write-Host "🗑️  Clearing .NET User Secrets..." -ForegroundColor Yellow
     dotnet user-secrets clear --project $csprojPath > $null 2>&1
