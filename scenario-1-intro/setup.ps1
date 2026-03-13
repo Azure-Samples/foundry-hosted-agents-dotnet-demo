@@ -104,9 +104,10 @@ if ($acctName -and $rgName) {
         --resource-group $rgName `
         --deployment-name gpt-5-mini `
         --model-name gpt-5-mini `
+        --model-version 2025-08-07 `
         --model-format OpenAI `
         --sku-capacity 10 `
-        --sku-name GlobalStandard 2>$null
+        --sku-name GlobalStandard
     if ($LASTEXITCODE -ne 0) {
         Write-Host "⚠️  Model deployment returned non-zero. The model may already be deployed." -ForegroundColor Yellow
     } else {

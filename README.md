@@ -36,7 +36,6 @@ These concepts come directly from the [official Microsoft Learn documentation](h
 | **Function Tools** | Plain C# methods the model can call — real server-side code execution, not prompt hacks | `GetCurrentDateTime` (Scenario 1), `ComputeStatistics` (Scenario 2), `GenerateImage` (Scenario 3) |
 | **Agent Identity** | Unpublished agents use the **project managed identity**. Published agents get a **distinct agent identity** — you must reconfigure resource permissions after publishing. | `deploy.ps1` in each scenario |
 | **Managed Service** | Foundry handles provisioning/autoscaling, conversation orchestration, identity management, tool/model integration, observability, and enterprise security. | Infrastructure provisioned via `setup.ps1` |
-| **Framework Support** | Microsoft Agent Framework (Python + C#), LangGraph (Python only), Custom code (both). This repo uses **Microsoft Agent Framework for .NET**. | `ChatClientAgent` + `AIFunctionFactory` pattern |
 
 ## What You'll Learn
 
