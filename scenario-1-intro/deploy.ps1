@@ -94,8 +94,7 @@ if ($LASTEXITCODE -eq 0) {
     az cognitiveservices agent delete `
         --account-name $acctName `
         --project-name $projName `
-        --name $agentName `
-        --yes 2>$null
+        --name $agentName 2>$null
 }
 
 # Build --env arguments for the container
