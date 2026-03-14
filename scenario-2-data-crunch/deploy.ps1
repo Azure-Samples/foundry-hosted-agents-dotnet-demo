@@ -45,12 +45,16 @@ $acctName = $null
 $projName = $null
 $acrEndpoint = $null
 $projectEndpoint = $null
+$openaiEndpoint = $null
+$deploymentName = $null
 
 foreach ($line in $envValues) {
     if ($line -match '^\s*AZURE_AI_ACCOUNT_NAME\s*=\s*"?([^"]*)"?\s*$') { $acctName = $Matches[1] }
     if ($line -match '^\s*AZURE_AI_PROJECT_NAME\s*=\s*"?([^"]*)"?\s*$') { $projName = $Matches[1] }
     if ($line -match '^\s*AZURE_CONTAINER_REGISTRY_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') { $acrEndpoint = $Matches[1] }
     if ($line -match '^\s*AZURE_AI_FOUNDRY_PROJECT_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') { $projectEndpoint = $Matches[1] }
+    if ($line -match '^\s*AZURE_OPENAI_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') { $openaiEndpoint = $Matches[1] }
+    if ($line -match '^\s*AZURE_OPENAI_DEPLOYMENT_NAME\s*=\s*"?([^"]*)"?\s*$') { $deploymentName = $Matches[1] }
 }
 
 if (-not $acctName -or -not $projName -or -not $acrEndpoint) {
@@ -94,15 +98,28 @@ if ($LASTEXITCODE -eq 0) {
         --yes 2>$null
 }
 
-az cognitiveservices agent create `
-    --account-name $acctName `
-    --project-name $projName `
-    --name $agentName `
-    --source $sourceDir `
-    --registry $acrEndpoint `
-    --cpu 1 `
-    --memory 2Gi `
-    --show-logs
+# Build --env arguments for the container
+$envArgs = @()
+if ($openaiEndpoint) { $envArgs += "AZURE_OPENAI_ENDPOINT=$openaiEndpoint" }
+if ($deploymentName) { $envArgs += "AZURE_OPENAI_DEPLOYMENT_NAME=$deploymentName" }
+
+$createArgs = @(
+    "cognitiveservices", "agent", "create",
+    "--account-name", $acctName,
+    "--project-name", $projName,
+    "--name", $agentName,
+    "--source", $sourceDir,
+    "--registry", $acrEndpoint,
+    "--cpu", "1",
+    "--memory", "2Gi",
+    "--show-logs"
+)
+if ($envArgs.Count -gt 0) {
+    $createArgs += "--env"
+    $createArgs += $envArgs
+}
+
+az @createArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Agent deployment failed." -ForegroundColor Red
     exit 1
