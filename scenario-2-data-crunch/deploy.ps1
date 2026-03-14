@@ -1,10 +1,14 @@
 #!/usr/bin/env pwsh
 # deploy.ps1 — Deploy the Data Crunch Agent container to Azure
 # Requires setup.ps1 to have been run first.
+# Uses "az cognitiveservices agent create --source" to build, push, and deploy.
 # Idempotent: safe to run multiple times (redeploys the latest code).
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+$agentName = "data-crunch-agent"
+$sourceDir = "$PSScriptRoot/src/DataCrunchAgent"
 
 Write-Host ""
 Write-Host "=== Data Crunch Agent — Deploy ===" -ForegroundColor Cyan
@@ -19,51 +23,88 @@ if (-not (Test-Path ".azure")) {
 }
 Write-Host "  ✅ .azure/ folder found" -ForegroundColor Green
 
-if (-not (Test-Path "$PSScriptRoot/azure.yaml")) {
-    Write-Host "❌ azure.yaml not found. Run setup.ps1 first." -ForegroundColor Red
-    exit 1
-}
-$yamlContent = Get-Content "$PSScriptRoot/azure.yaml" -Raw
-if ($yamlContent -notmatch 'services:') {
-    Write-Host "❌ azure.yaml has no 'services' section. Run setup.ps1 again to register the agent." -ForegroundColor Red
-    exit 1
-}
-Write-Host "  ✅ azure.yaml found with services definition" -ForegroundColor Green
-
-if (-not (Test-Path "$PSScriptRoot/src/DataCrunchAgent/Dockerfile")) {
-    Write-Host "❌ src/DataCrunchAgent/Dockerfile not found. The agent code must be created first." -ForegroundColor Red
+if (-not (Test-Path "$sourceDir/Dockerfile")) {
+    Write-Host "❌ $sourceDir/Dockerfile not found. The agent code must be created first." -ForegroundColor Red
     exit 1
 }
 Write-Host "  ✅ Dockerfile found" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
-# 2. Check Docker Desktop is running
+# 2. Read azd environment values
 # ============================================================
-Write-Host "Checking Docker..." -ForegroundColor Yellow
-try {
-    docker info > $null 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Docker is not running. Start Docker Desktop and try again." -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "  ✅ Docker is running" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Docker is not available. Install Docker Desktop: https://docs.docker.com/get-docker/" -ForegroundColor Red
+Write-Host "Reading azd environment..." -ForegroundColor Yellow
+
+$envValues = azd env get-values 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Could not read azd environment. Run setup.ps1 first." -ForegroundColor Red
     exit 1
 }
+
+$acctName = $null
+$projName = $null
+$acrEndpoint = $null
+$projectEndpoint = $null
+
+foreach ($line in $envValues) {
+    if ($line -match '^\s*AZURE_AI_ACCOUNT_NAME\s*=\s*"?([^"]*)"?\s*$') { $acctName = $Matches[1] }
+    if ($line -match '^\s*AZURE_AI_PROJECT_NAME\s*=\s*"?([^"]*)"?\s*$') { $projName = $Matches[1] }
+    if ($line -match '^\s*AZURE_CONTAINER_REGISTRY_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') { $acrEndpoint = $Matches[1] }
+    if ($line -match '^\s*AZURE_AI_FOUNDRY_PROJECT_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') { $projectEndpoint = $Matches[1] }
+}
+
+if (-not $acctName -or -not $projName -or -not $acrEndpoint) {
+    Write-Host "❌ Missing required environment values (AZURE_AI_ACCOUNT_NAME, AZURE_AI_PROJECT_NAME, AZURE_CONTAINER_REGISTRY_ENDPOINT)." -ForegroundColor Red
+    Write-Host "   Run setup.ps1 first to provision resources." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "  Account:  $acctName" -ForegroundColor DarkGray
+Write-Host "  Project:  $projName" -ForegroundColor DarkGray
+Write-Host "  Registry: $acrEndpoint" -ForegroundColor DarkGray
+Write-Host "  ✅ Environment values loaded" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
-# 3. Deploy with azd
+# 3. Ensure az cognitiveservices extension is installed
 # ============================================================
-Write-Host "Deploying agent to Azure with 'azd deploy'..." -ForegroundColor Yellow
-Write-Host "This builds the container, pushes to ACR, and creates the hosted agent deployment." -ForegroundColor DarkGray
+Write-Host "Ensuring az cognitiveservices CLI extension..." -ForegroundColor Yellow
+az extension add --name cognitiveservices --upgrade --yes 2>$null
+Write-Host "  ✅ cognitiveservices extension ready" -ForegroundColor Green
 Write-Host ""
 
-azd deploy
+# ============================================================
+# 4. Deploy the agent using az cognitiveservices agent create
+# ============================================================
+Write-Host "Deploying agent '$agentName' to Azure..." -ForegroundColor Yellow
+Write-Host "This builds the container from source, pushes to ACR, and creates the hosted agent." -ForegroundColor DarkGray
+Write-Host ""
+
+# Delete existing agent if present (for idempotent redeployment)
+az cognitiveservices agent show `
+    --account-name $acctName `
+    --project-name $projName `
+    --name $agentName 2>$null >$null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  Removing existing agent deployment for redeployment..." -ForegroundColor Yellow
+    az cognitiveservices agent delete `
+        --account-name $acctName `
+        --project-name $projName `
+        --name $agentName `
+        --yes 2>$null
+}
+
+az cognitiveservices agent create `
+    --account-name $acctName `
+    --project-name $projName `
+    --name $agentName `
+    --source $sourceDir `
+    --registry $acrEndpoint `
+    --cpu 1 `
+    --memory 2Gi `
+    --show-logs
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ 'azd deploy' failed." -ForegroundColor Red
+    Write-Host "❌ Agent deployment failed." -ForegroundColor Red
     exit 1
 }
 Write-Host ""
@@ -71,27 +112,8 @@ Write-Host "  ✅ Agent deployed to Azure" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
-# 4. Print endpoint and playground URLs
+# 5. Print endpoint and playground URLs
 # ============================================================
-Write-Host "Retrieving deployment information..." -ForegroundColor Yellow
-
-$envValues = azd env get-values 2>$null
-$projectEndpoint = $null
-$projectName = $null
-$resourceGroup = $null
-
-foreach ($line in $envValues) {
-    if ($line -match '^\s*AZURE_AI_FOUNDRY_PROJECT_ENDPOINT\s*=\s*"?([^"]*)"?\s*$') {
-        $projectEndpoint = $Matches[1]
-    }
-    if ($line -match '^\s*AZURE_AI_PROJECT_NAME\s*=\s*"?([^"]*)"?\s*$') {
-        $projectName = $Matches[1]
-    }
-    if ($line -match '^\s*AZURE_RESOURCE_GROUP\s*=\s*"?([^"]*)"?\s*$') {
-        $resourceGroup = $Matches[1]
-    }
-}
-
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Deployment Complete!" -ForegroundColor Cyan
@@ -105,8 +127,8 @@ if ($projectEndpoint) {
 Write-Host ""
 Write-Host "  Test your agent:" -ForegroundColor White
 Write-Host "  1. Open https://ai.azure.com" -ForegroundColor White
-if ($projectName) {
-    Write-Host "  2. Navigate to project: $projectName" -ForegroundColor White
+if ($projName) {
+    Write-Host "  2. Navigate to project: $projName" -ForegroundColor White
 } else {
     Write-Host "  2. Navigate to your project" -ForegroundColor White
 }

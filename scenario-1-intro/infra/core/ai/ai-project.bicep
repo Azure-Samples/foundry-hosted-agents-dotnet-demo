@@ -34,6 +34,9 @@ param enableMonitoring bool = true
 @description('Enable hosted agent deployment')
 param enableHostedAgents bool = false
 
+@description('Service name for the hosted agent (used for azd-service-name tag)')
+param hostedAgentServiceName string = ''
+
 @description('Optional. Existing container registry resource ID. If provided, a connection will be created to this ACR instead of creating a new one.')
 param existingContainerRegistryResourceId string = ''
 
@@ -97,10 +100,12 @@ module applicationInsights '../monitor/applicationinsights.bicep' = if (shouldCr
 
 // Always create a new AI Account for now (simplified approach)
 // TODO: Add support for existing accounts in a future version
+var accountTags = !empty(hostedAgentServiceName) ? union(tags, { 'azd-service-name': hostedAgentServiceName }) : tags
+
 resource aiAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: !empty(existingAiAccountName) ? existingAiAccountName : 'ai-account-${resourceToken}'
   location: location
-  tags: tags
+  tags: accountTags
   sku: {
     name: 'S0'
   }
@@ -134,6 +139,7 @@ resource aiAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   resource project 'projects' = {
     name: aiFoundryProjectName
     location: location
+    tags: !empty(hostedAgentServiceName) ? union(tags, { 'azd-service-name': hostedAgentServiceName }) : tags
     identity: {
       type: 'SystemAssigned'
     }

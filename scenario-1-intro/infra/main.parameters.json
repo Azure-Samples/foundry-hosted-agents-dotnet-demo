@@ -41,6 +41,9 @@
       "enableHostedAgents": {
         "value": "${ENABLE_HOSTED_AGENTS=false}"
       },
+      "hostedAgentServiceName": {
+        "value": "${HOSTED_AGENT_SERVICE_NAME=}"
+      },
       "existingContainerRegistryResourceId": {
         "value": "${AZURE_CONTAINER_REGISTRY_RESOURCE_ID=}"
       },

@@ -70,10 +70,63 @@ if (-not (Test-Path ".azure")) {
 }
 
 # ============================================================
-# 4. Provision Azure resources
+# 4. Configure hosted agents and register service definition
+# ============================================================
+Write-Host "Configuring hosted agents..." -ForegroundColor Yellow
+
+# Enable hosted agents (creates ACR and capability host during provision)
+azd env set ENABLE_HOSTED_AGENTS true
+azd env set HOSTED_AGENT_SERVICE_NAME time-zone-agent
+Write-Host "  ✅ ENABLE_HOSTED_AGENTS and service name configured" -ForegroundColor Green
+
+# Try azd ai agent init (may fail non-interactively due to overwrite prompt)
+$agentYaml = "$PSScriptRoot/src/time-zone-agent/agent.yaml"
+if (Test-Path $agentYaml) {
+    azd ai agent init -m $agentYaml --no-prompt 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  ⚠️  'azd ai agent init' could not run non-interactively — using fallback." -ForegroundColor Yellow
+    } else {
+        Write-Host "  ✅ Agent definition registered via azd" -ForegroundColor Green
+    }
+}
+
+# Ensure azure.yaml has a services section (required for azd deploy)
+$azureYaml = "$PSScriptRoot/azure.yaml"
+if (Test-Path $azureYaml) {
+    $yamlContent = Get-Content $azureYaml -Raw
+    if ($yamlContent -notmatch 'services:') {
+        Write-Host "Adding services section to azure.yaml..." -ForegroundColor Yellow
+        $servicesBlock = @"
+
+services:
+  time-zone-agent:
+    project: ./src/time-zone-agent
+    host: ai.endpoint
+    language: dotnet
+    docker:
+      path: ./Dockerfile
+      context: .
+"@
+        Add-Content -Path $azureYaml -Value $servicesBlock
+        Write-Host "  ✅ Services section added to azure.yaml" -ForegroundColor Green
+    } else {
+        Write-Host "  ✅ azure.yaml already has services section" -ForegroundColor Green
+    }
+}
+
+# Restore our custom agent.yaml in case azd overwrote it
+if (Test-Path $agentYaml) {
+    Push-Location $PSScriptRoot
+    git checkout -- "src/time-zone-agent/agent.yaml" 2>$null
+    Pop-Location
+}
+Write-Host ""
+
+# ============================================================
+# 5. Provision Azure resources
 # ============================================================
 Write-Host "Provisioning Azure resources with 'azd provision'..." -ForegroundColor Yellow
-Write-Host "This creates the Foundry project, model deployment, ACR, and supporting services." -ForegroundColor DarkGray
+Write-Host "This creates the Foundry project, ACR, capability host, and supporting services." -ForegroundColor DarkGray
 Write-Host ""
 
 azd provision
@@ -86,7 +139,7 @@ Write-Host "  ✅ Azure resources provisioned" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================
-# 4b. Deploy the gpt-5-mini model
+# 5b. Deploy the gpt-5-mini model
 # ============================================================
 Write-Host "Deploying gpt-5-mini model to Foundry..." -ForegroundColor Yellow
 
@@ -118,53 +171,6 @@ if ($acctName -and $rgName) {
     Write-Host "   Deploy the model manually via Azure Portal or CLI." -ForegroundColor Yellow
 }
 Write-Host ""
-
-# ============================================================
-# 5. Register the agent definition and ensure azure.yaml has services
-# ============================================================
-$agentYaml = "$PSScriptRoot/src/time-zone-agent/agent.yaml"
-if (Test-Path $agentYaml) {
-    Write-Host "Registering agent definition from $agentYaml..." -ForegroundColor Yellow
-    azd ai agent init -m $agentYaml --no-prompt 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️  'azd ai agent init' could not run non-interactively." -ForegroundColor Yellow
-    } else {
-        Write-Host "  ✅ Agent definition registered via azd" -ForegroundColor Green
-    }
-
-    # Ensure azure.yaml has a services section (required for azd deploy)
-    $azureYaml = "$PSScriptRoot/azure.yaml"
-    if (Test-Path $azureYaml) {
-        $yamlContent = Get-Content $azureYaml -Raw
-        if ($yamlContent -notmatch 'services:') {
-            Write-Host "Adding services section to azure.yaml..." -ForegroundColor Yellow
-            $servicesBlock = @"
-
-services:
-  time-zone-agent:
-    project: ./src/time-zone-agent
-    host: ai.agent
-    language: dotnet
-    docker:
-      path: ./Dockerfile
-      context: .
-"@
-            Add-Content -Path $azureYaml -Value $servicesBlock
-            Write-Host "  ✅ Services section added to azure.yaml" -ForegroundColor Green
-        } else {
-            Write-Host "  ✅ azure.yaml already has services section" -ForegroundColor Green
-        }
-    }
-    # Restore our custom agent.yaml in case azd overwrote it
-    Push-Location $PSScriptRoot
-    git checkout -- "src/time-zone-agent/agent.yaml" 2>$null
-    Pop-Location
-    Write-Host ""
-} else {
-    Write-Host "⚠️  $agentYaml not found — skipping agent registration." -ForegroundColor Yellow
-    Write-Host "   Run this script again after the agent code is created." -ForegroundColor Yellow
-    Write-Host ""
-}
 
 # ============================================================
 # 6. Set .NET User Secrets from azd environment values

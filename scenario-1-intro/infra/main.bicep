@@ -75,6 +75,9 @@ var aiProjectDependentResources = json(aiProjectDependentResourcesJson)
 @description('Enable hosted agent deployment')
 param enableHostedAgents bool
 
+@description('Service name for the hosted agent (used for azd-service-name tag on the AI project)')
+param hostedAgentServiceName string = ''
+
 @description('Enable monitoring for the AI project')
 param enableMonitoring bool = true
 
@@ -140,6 +143,7 @@ module aiProject 'core/ai/ai-project.bicep' = {
     additionalDependentResources: dependentResources
     enableMonitoring: enableMonitoring
     enableHostedAgents: enableHostedAgents
+    hostedAgentServiceName: hostedAgentServiceName
     existingContainerRegistryResourceId: existingContainerRegistryResourceId
     existingContainerRegistryEndpoint: existingContainerRegistryEndpoint
     existingAcrConnectionName: existingAcrConnectionName
