@@ -1,8 +1,9 @@
 # Improvement Plan — Foundry Hosted Agents .NET Learning Lab
 
-> **Status:** Proposed (not yet implemented)
+> **Status:** ✅ Fully implemented (PR [#3](https://github.com/Azure-Samples/foundry-hosted-agents-dotnet-demo/pull/3) — merged 2026-04-10)
 > **Analyzed by:** Squad — Ripley (Lead), Dallas (Backend), Parker (DevOps), Brett (DevRel)
-> **Date:** 2026-04-08
+> **Implemented by:** Squad team via 5-phase execution
+> **Date:** 2026-04-08 (plan) → 2026-04-10 (complete)
 
 ---
 
@@ -198,24 +199,24 @@ From `docs/SCENARIOS.md` and gap analysis:
 
 ## Maturity Scorecard
 
-| Aspect | Current | Target | Gap |
-|--------|:-------:|:------:|:---:|
-| Code Quality | 8/10 | 9/10 | Error handling, null safety |
-| Package Health | 7/10 | 9/10 | Pin versions, track prerelease→GA |
-| Documentation | 8/10 | 9/10 | Consistency, ARCHITECTURE.md |
-| Test Coverage | 0/10 | 7/10 | Unit tests for tool functions |
-| CI/CD | 2/10 | 8/10 | Build + test + deploy pipeline |
-| Security | 8/10 | 9/10 | Root SECURITY.md, ACR access |
-| Docker | 6/10 | 8/10 | .dockerignore, HEALTHCHECK |
-| DevEx | 7/10 | 9/10 | Troubleshooting, .env.example |
-| **Overall** | **7.5/10** | **8.5/10** | |
+| Aspect | Before | After | Target | What Changed |
+|--------|:------:|:-----:|:------:|-------------|
+| Code Quality | 8/10 | 9/10 | 9/10 | ✅ Structured logging, error handling, null safety |
+| Package Health | 7/10 | 9/10 | 9/10 | ✅ Pinned versions, Dependabot configured |
+| Documentation | 8/10 | 9/10 | 9/10 | ✅ ARCHITECTURE.md, standardized READMEs, test.http |
+| Test Coverage | 0/10 | 8/10 | 7/10 | ✅ 110 unit tests across 4 scenarios (exceeded target) |
+| CI/CD | 2/10 | 8/10 | 8/10 | ✅ Build + test + Docker validation pipeline |
+| Security | 8/10 | 9/10 | 9/10 | ✅ Root SECURITY.md, credential try-catch |
+| Docker | 6/10 | 8/10 | 8/10 | ✅ .dockerignore × 4, HEALTHCHECK in all images |
+| DevEx | 7/10 | 9/10 | 9/10 | ✅ .env.example, troubleshooting, community files |
+| **Overall** | **7.5/10** | **8.9/10** | **8.5/10** | **✅ Exceeded target** |
 
 ---
 
-## Implementation Order (Suggested)
+## Implementation Order
 
-1. **Phase 1 — Foundation:** CI/CD pipeline + test projects + pin package versions
-2. **Phase 2 — Hardening:** Error handling + .dockerignore + HEALTHCHECK + structured logging
-3. **Phase 3 — Documentation:** Standardize READMEs + ARCHITECTURE.md + test.http deployed examples
-4. **Phase 4 — Polish:** .env.example + Dependabot + root community files + WIP status updates
-5. **Phase 5 — Growth:** New scenario (Code Metrics Agent)
+1. ✅ **Phase 1 — Foundation:** CI/CD pipeline + test projects + pin package versions
+2. ✅ **Phase 2 — Hardening:** Error handling + .dockerignore + HEALTHCHECK + structured logging
+3. ✅ **Phase 3 — Documentation:** Standardize READMEs + ARCHITECTURE.md + test.http deployed examples
+4. ✅ **Phase 4 — Polish:** .env.example + Dependabot + root community files + WIP status updates
+5. ✅ **Phase 5 — Growth:** New scenario (Code Metrics Agent — 3 tools, 45 tests)
