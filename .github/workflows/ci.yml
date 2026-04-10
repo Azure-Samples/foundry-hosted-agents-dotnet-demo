@@ -51,6 +51,9 @@ jobs:
           - scenario: scenario-3-image-gen
             dockerfile: scenario-3-image-gen/src/HostedAgent/Dockerfile
             context: scenario-3-image-gen/src/HostedAgent
+          - scenario: scenario-4-code-metrics
+            dockerfile: scenario-4-code-metrics/src/CodeMetricsAgent/Dockerfile
+            context: scenario-4-code-metrics/src/CodeMetricsAgent
 
     steps:
       - name: Checkout repository

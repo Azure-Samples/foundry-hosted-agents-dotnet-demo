@@ -30,6 +30,15 @@ updates:
     allow:
       - dependency-type: "all"
 
+  # Scenario 4: Code Metrics Agent
+  # Lightweight metrics analysis agent
+  - package-ecosystem: "nuget"
+    directory: "/scenario-4-code-metrics"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-type: "all"
+
   # ==================== Docker Base Image Updates ====================
   # Scenario 1: Time Zone Agent (Alpine-based .NET SDK)
   - package-ecosystem: "docker"
@@ -46,6 +55,12 @@ updates:
   # Scenario 3: Image Generator Agent (Debian-based .NET SDK for CUDA compatibility)
   - package-ecosystem: "docker"
     directory: "/scenario-3-image-gen/src/HostedAgent"
+    schedule:
+      interval: "weekly"
+
+  # Scenario 4: Code Metrics Agent (Alpine-based .NET SDK)
+  - package-ecosystem: "docker"
+    directory: "/scenario-4-code-metrics/src/CodeMetricsAgent"
     schedule:
       interval: "weekly"
 

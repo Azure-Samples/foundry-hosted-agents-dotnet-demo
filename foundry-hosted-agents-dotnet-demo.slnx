@@ -23,4 +23,11 @@
   <Folder Name="/scenario-3-image-gen/tests/">
     <Project Path="scenario-3-image-gen/tests/ImageGenAgent.Tests/ImageGenAgent.Tests.csproj" />
   </Folder>
+  <Folder Name="/scenario-4-code-metrics/" />
+  <Folder Name="/scenario-4-code-metrics/src/">
+    <Project Path="scenario-4-code-metrics/src/CodeMetricsAgent/CodeMetricsAgent.csproj" />
+  </Folder>
+  <Folder Name="/scenario-4-code-metrics/tests/">
+    <Project Path="scenario-4-code-metrics/tests/CodeMetricsAgent.Tests/CodeMetricsAgent.Tests.csproj" />
+  </Folder>
 </Solution>
