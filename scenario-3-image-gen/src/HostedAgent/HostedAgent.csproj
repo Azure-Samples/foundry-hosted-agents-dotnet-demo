@@ -16,7 +16,8 @@
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.4" />
         <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.4" />
-        <PackageReference Include="ElBruno.Text2Image" Version="*" />
-        <PackageReference Include="ElBruno.Text2Image.Cuda" Version="*" />
+        <!-- Community packages by @elbruno — pin to tested version -->
+        <PackageReference Include="ElBruno.Text2Image" Version="0.6.0" />
+        <PackageReference Include="ElBruno.Text2Image.Cuda" Version="0.6.0" />
     </ItemGroup>
 </Project>
