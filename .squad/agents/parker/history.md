@@ -17,3 +17,8 @@
 ## Learnings
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
+
+- **CI workflow:** `.github/workflows/ci.yml` — build verification pipeline (build+test .NET solution, Docker validation for all 3 scenarios via matrix). Triggers on push/PR to main.
+- **Dockerfiles:** All three scenario Dockerfiles use `COPY . .` with no parent-directory references, so each project directory is its own build context. All have a `build` stage target.
+- **Solution note:** `foundry-hosted-agents-dotnet-demo.slnx` references `scenario-1-intro/src/HostedAgent/` but the actual directory is `scenario-1-intro/src/time-zone-agent/`. Scenario-3 is not in the solution file. This may cause build issues.
+- **Docker base images:** scenario-1 and scenario-2 use `dotnet/sdk:10.0-alpine`; scenario-3 uses `dotnet/sdk:10.0` (non-alpine, for CUDA compat).

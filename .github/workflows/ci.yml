@@ -1,0 +1,65 @@
+# CI pipeline — build verification for the Foundry Hosted Agents .NET demo.
+# Runs on pushes and PRs to main. Two parallel jobs:
+#   1. Build & test the .NET solution
+#   2. Validate Docker builds for each scenario
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore foundry-hosted-agents-dotnet-demo.slnx
+
+      - name: Build solution
+        run: dotnet build foundry-hosted-agents-dotnet-demo.slnx -c Release --no-restore
+
+      - name: Run tests
+        run: dotnet test foundry-hosted-agents-dotnet-demo.slnx -c Release --no-build
+
+  docker-validate:
+    name: Docker Build — ${{ matrix.scenario }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: scenario-1-intro
+            dockerfile: scenario-1-intro/src/time-zone-agent/Dockerfile
+            context: scenario-1-intro/src/time-zone-agent
+          - scenario: scenario-2-data-crunch
+            dockerfile: scenario-2-data-crunch/src/DataCrunchAgent/Dockerfile
+            context: scenario-2-data-crunch/src/DataCrunchAgent
+          - scenario: scenario-3-image-gen
+            dockerfile: scenario-3-image-gen/src/HostedAgent/Dockerfile
+            context: scenario-3-image-gen/src/HostedAgent
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image (build stage only)
+        run: |
+          docker build \
+            --target build \
+            -f ${{ matrix.dockerfile }} \
+            ${{ matrix.context }}
+        timeout-minutes: 10
