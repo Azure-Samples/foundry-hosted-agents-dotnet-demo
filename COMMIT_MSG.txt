@@ -1,9 +1,0 @@
-feat: Phase 1 — CI/CD pipeline, test projects, pin package versions
-
-- Add .github/workflows/ci.yml with build/test and Docker validation jobs
-- Add xunit test projects for all 3 scenarios (65 tests)
-- Pin ElBruno.Text2Image packages to v0.6.0 in Scenario 3
-- Update .slnx with test projects, Scenario 3, fix stale paths
-- Add InternalsVisibleTo for DataCrunchAgent test access
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

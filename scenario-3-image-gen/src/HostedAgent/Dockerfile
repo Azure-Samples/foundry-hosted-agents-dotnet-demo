@@ -13,4 +13,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app .
 EXPOSE 8088
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl --fail --silent http://localhost:8088/ || exit 1
 ENTRYPOINT ["dotnet", "HostedAgent.dll"]
