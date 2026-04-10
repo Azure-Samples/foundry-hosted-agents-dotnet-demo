@@ -1,6 +1,6 @@
 # Scenario 2 — Data Crunch Agent (End-to-End Application)
 
-> 🚧 **Work in Progress** — This scenario is under active development. Code and documentation may be incomplete or change without notice.
+> 🟡 **Beta** — This scenario is substantially complete (75%) with working code, unit tests, and Blazor frontend. Minor features and edge cases are still being refined.
 
 <!-- demo gif goes here -->
 
