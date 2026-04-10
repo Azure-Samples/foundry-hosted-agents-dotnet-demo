@@ -1,0 +1,45 @@
+### Test the Code Metrics Agent locally
+POST http://localhost:8088/responses
+Content-Type: application/json
+
+{"input": "Analyze this C# method for complexity:\n\npublic int CalculateDiscount(int basePrice, bool isVIP, bool isHoliday, int quantity)\n{\n    int discount = 0;\n    if (isVIP)\n    {\n        discount = 20;\n    }\n    if (isHoliday)\n    {\n        discount += 10;\n    }\n    if (quantity > 100)\n    {\n        discount += 5;\n    }\n    return (int)(basePrice * (100 - discount) / 100.0);\n}"}
+
+### Count lines of code in a method
+POST http://localhost:8088/responses
+Content-Type: application/json
+
+{"input": "How many lines of code are in this?\n\npublic string GetUserDisplayName(User user)\n{\n    // Return formatted user name\n    if (user == null)\n        return \"Unknown\";\n    \n    var fullName = $\"{user.FirstName} {user.LastName}\";\n    return fullName.Trim();\n}"}
+
+### Calculate maintainability index
+POST http://localhost:8088/responses
+Content-Type: application/json
+
+{"input": "What's the maintainability index of this code?\n\npublic decimal CalculateAnnualTax(decimal income, string filingStatus)\n{\n    decimal taxRate = filingStatus switch\n    {\n        \"single\" => 0.22m,\n        \"married\" => 0.12m,\n        \"head\" => 0.12m,\n        _ => 0.22m\n    };\n    \n    return income * taxRate;\n}"}
+
+### Multiple code analysis request
+POST http://localhost:8088/responses
+Content-Type: application/json
+
+{"input": "Please analyze this entire method for complexity, line count, and maintainability:\n\nprivate bool ValidateEmail(string email)\n{\n    if (string.IsNullOrWhiteSpace(email))\n        return false;\n    \n    try\n    {\n        var addr = new System.Net.Mail.MailAddress(email);\n        return addr.Address == email;\n    }\n    catch\n    {\n        return false;\n    }\n}"}
+
+### ─── Deployed Testing (Microsoft Foundry) ───
+
+# Replace with your Foundry project endpoint from setup.ps1 output
+@foundryEndpoint = https://your-project.services.ai.azure.com
+
+# Get a token: az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv
+@token = <your-token>
+
+### Test deployed agent — complexity analysis
+POST {{foundryEndpoint}}/agents/responses
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{"input": "Analyze the cyclomatic complexity of this method:\n\npublic void ProcessOrder(Order order)\n{\n    if (order == null) return;\n    if (order.Items.Count == 0) return;\n    \n    foreach (var item in order.Items)\n    {\n        if (item.Quantity <= 0) continue;\n        if (item.Price < 0) continue;\n        \n        var subtotal = item.Quantity * item.Price;\n        order.Total += subtotal;\n    }\n}"}
+
+### Test deployed agent — maintainability check
+POST {{foundryEndpoint}}/agents/responses
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{"input": "Check the maintainability of this code:\n\npublic string Format(object value)\n{\n    return value?.ToString() ?? \"\";\n}"}

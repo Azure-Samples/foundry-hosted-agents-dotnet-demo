@@ -15,6 +15,11 @@ using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+// Structured logging for the agent process
+using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger("TimeZoneAgent");
 
 // Configuration from User Secrets (local dev) + environment variables (deployed container)
 var config = new ConfigurationBuilder()
@@ -25,15 +30,25 @@ var config = new ConfigurationBuilder()
 var endpoint = config["AZURE_OPENAI_ENDPOINT"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set. Run setup.ps1 or: dotnet user-secrets set AZURE_OPENAI_ENDPOINT <your-endpoint>");
 var deploymentName = config["AZURE_OPENAI_DEPLOYMENT_NAME"] ?? "gpt-5-mini";
+
 // Credential: AzureCliCredential for local dev (respects az login --tenant),
 // DefaultAzureCredential in containers (uses managed identity).
-TokenCredential credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
-    ? new DefaultAzureCredential()
-    : new AzureCliCredential();
+TokenCredential credential;
+try
+{
+    credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+        ? new DefaultAzureCredential()
+        : new AzureCliCredential();
+}
+catch (AuthenticationFailedException ex)
+{
+    logger.LogCritical(ex, "Authentication failed. Run: az login --tenant <your-tenant-id>");
+    throw;
+}
 
-Console.WriteLine($"Endpoint: {endpoint}");
-Console.WriteLine($"Model: {deploymentName}");
-Console.WriteLine($"Auth: {credential.GetType().Name}");
+logger.LogInformation("Endpoint: {Endpoint}", endpoint);
+logger.LogInformation("Model: {Model}", deploymentName);
+logger.LogInformation("Auth: {CredentialType}", credential.GetType().Name);
 
 // FUNCTION TOOL — This is the core value of a hosted agent. The model decides WHEN to call
 // this method, but the method runs real C# code server-side. No hallucinated results.
@@ -70,5 +85,5 @@ var agent = new ChatClientAgent(chatClient,
 // - Translates Foundry Responses Protocol ↔ Microsoft Agent Framework
 // - Integrates OpenTelemetry for observability (traces, metrics, logs)
 // - Makes your local agent compatible with Foundry's managed infrastructure
-Console.WriteLine("Time Zone Agent running on http://localhost:8088");
+logger.LogInformation("{AgentName} running on {Url}", "TimeZoneAgent", "http://localhost:8088");
 await agent.RunAIAgentAsync(telemetrySourceName: "Agents");

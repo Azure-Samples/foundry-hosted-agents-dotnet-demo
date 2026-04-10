@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/.git/
+**/.vs/
+**/.vscode/
+**/*.md
+**/*.http
+**/agent.yaml
+**/.dockerignore
+**/Dockerfile

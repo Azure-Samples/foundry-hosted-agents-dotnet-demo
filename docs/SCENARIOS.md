@@ -408,6 +408,7 @@ static string ExportStoryboard(
 
 | | Code Metrics | Data Crunch | Secret Scanner | Image Generator | Style Transfer | Storyboard |
 |---|---|---|---|---|---|---|
+| **Status** | 🚧 In Development | ✅ In Development | 📋 Proposed | 🟡 Beta | 📋 Proposed | 📋 Proposed |
 | **Tools** | 3 | 3 | 3 | 3 | 3 | 3 |
 | **Lines of tool code** | ~60 | ~90 | ~100 | ~40 | ~80 | ~150 |
 | **External deps** | None | None | None | ElBruno.Text2Image | ElBruno.Text2Image | ElBruno.Text2Image |

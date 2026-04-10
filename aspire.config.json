@@ -1,0 +1,5 @@
+{
+    "appHost": {
+        "path": "scenario-2-data-crunch\\src\\DataCrunch.AppHost\\DataCrunch.AppHost.csproj"
+    }
+}

@@ -17,4 +17,6 @@
 
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+- **Scenario 1 README must be scenario-specific, not boilerplate.** Rewritten with clear learning outcomes, architecture diagram, single function tool documentation, and troubleshooting focused on hosted agent patterns.
+- **Template consistency matters for docs.** Scenario 2 established the gold standard structure (Prerequisites table, Quick Start numbered steps, Troubleshooting table, Clean Up, navigation). All three scenarios now follow this pattern.
+- **test.http files serve both local and deployed workflows.** Added "Deployed Testing" sections to all three test.http files with placeholders for Foundry endpoint and token, making it clear how to test agents after deployment without guessing at the API contract.
