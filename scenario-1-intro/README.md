@@ -1,183 +1,191 @@
-# Microsoft Foundry `azd` bicep starter kit (basic)
+# Scenario 1 — Intro: Time Zone Agent
 
-This Azure Developer CLI (azd) template provides a streamlined way to provision and deploy Microsoft Foundry resources for building and running AI agents. It includes infrastructure-as-code definitions and sample application code to help you quickly get started with Microsoft Foundry's agent capabilities, including model deployments, workspace configuration, and supporting services like storage and container hosting.
+> 🎯 The simplest possible hosted agent. Learn the core hosting adapter pattern with a single function tool: `GetCurrentDateTime(string ianaTimezone)`. Your introduction to how Foundry-hosted agents work in .NET.
 
-This template does **not** include agent code or application code. You will find samples in other repositories such as [foundry-samples](https://github.com/azure-ai-foundry/foundry-samples):
-- [hosted agents samples (python)](https://github.com/azure-ai-foundry/foundry-samples/tree/main/samples/python/hosted-agents)
-- [hosted agents samples (C#)](https://github.com/azure-ai-foundry/foundry-samples/tree/main/samples/csharp/hosted-agents)
+> 🚧 **Work in Progress** — This scenario is under active development. Code and documentation may be incomplete or change without notice.
 
-[Features](#features) • [Getting Started](#getting-started) • [Guidance](#guidance)
+## What You'll Learn
 
-This template, the application code and configuration it contains, has been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features.
+- 🎯 The **hosted agent hosting adapter pattern** — how your C# code becomes an HTTP-callable agent in Foundry
+- 🎯 Writing and exposing **function tools** — real methods the LLM calls server-side (no hallucinations)
+- 🎯 **Credential switching** — `AzureCliCredential` for local development, `DefaultAzureCredential` in containers
+- 🎯 Using the **Microsoft Agent Framework** with Azure OpenAI
+- 🎯 Testing agents locally with REST calls before deploying
 
-With any AI solutions you create using these templates, you are responsible for assessing all associated risks, and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
+## What Are Hosted Agents?
 
-## Features
+A **hosted agent** is your .NET code running as a containerized service in Microsoft Foundry. You write the agent logic and expose **function tools** — plain C# methods the LLM can invoke. The LLM decides *when* to call them; your code provides the *exact* answer. No hallucinations, no guessing.
 
-This project framework provides the following features:
+This scenario is the minimal starting point. It has one tool: ask for the time in any timezone. Start here, then graduate to multi-tool agents (Scenario 2) and GPU workloads (Scenario 3).
 
-* **Microsoft Foundry Project**: Complete setup of Microsoft Foundry workspace with project configuration
-* **Foundry Model Deployments**: Automatic deployment of AI models for agent capabilities
-* **Azure Container Registry**: Container image storage and management for agent deployments
-* **Managed Identity**: Built-in Azure Managed Identity for keyless authentication between services
+> **First time here?** Read the [main README](../README.md) for core concepts and architecture overview.
 
-### Architecture Diagram
+## Architecture
 
-This starter kit will provision the bare minimum for your hosted agent to work (if `ENABLE_HOSTED_AGENTS=true`).
-
-| Resource | Description |
-|----------|-------------|
-| [Microsoft Foundry](https://learn.microsoft.com/azure/ai-foundry) | Provides a collaborative workspace for AI development with access to models, data, and compute resources |
-| [Azure Container Registry](https://learn.microsoft.com/azure/container-registry/) | Stores and manages container images for secure deployment |
-| [Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) | *Optional* - Provides application performance monitoring, logging, and telemetry for debugging and optimization |
-| [Log Analytics Workspace](https://learn.microsoft.com/azure/azure-monitor/logs/log-analytics-workspace-overview) | *Optional* - Collects and analyzes telemetry data for monitoring and troubleshooting |
-
-Those resources will be used by the [`azd ai agent` extension](https://aka.ms/azdaiagent/docs) when building and deploying agents:
-
-```mermaid
-graph TB
-    Dev[👤 Agent Developer]
-    Dev -->|1. build agent<br/>container code| ACR
-    Dev -->|2. deploy agent| AIFP
-    Dev -->|4. query agent| AIFP
-
-    subgraph "Azure Resource Group"
-        subgraph "Azure AI Foundry Account"
-            AIFP[Azure AI Foundry<br/>Project]
-            Models[Model Deployments]
-        end
-        
-        subgraph ACR[Azure Container Registry]
-            ACC[Agent code container]
-        end
-    end
-    
-    %% Connections
-    AIFP --> Models
-    ACR -->|3. AcrPull| AIFP
-    
-    %% Styling
-    classDef primary fill:#0078d4,stroke:#005a9e,stroke-width:2px,color:#fff
-    classDef secondary fill:#00bcf2,stroke:#0099bc,stroke-width:2px,color:#fff
-    
-    class AIFP,Models primary
-    class ACR secondary
+```
+┌─────────────────────────────────────┐
+│  You (REST client)                  │
+│  POST /responses                    │
+│  {"input": "Time in Tokyo?"}        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  Hosting Adapter (port 8088)        │
+│  (AgentServer SDK)                  │
+│  • Protocol translation             │
+│  • OpenTelemetry integration        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  ChatClientAgent                    │
+│  • Instructions: "Help with time"   │
+│  • Tools: [GetCurrentDateTime]      │
+└──────────────┬──────────────────────┘
+               │
+        ┌──────▼──────┐
+        │             │
+        ▼             ▼
+   gpt-5-mini    GetCurrentDateTime()
+   (Azure        (C# method)
+    OpenAI)      TimeZoneInfo.ConvertTime()
+                 ↓ Real answer
 ```
 
-The template is parametrized so that it can be configured with additional resources depending on the agent requirements:
+## Prerequisites
 
-* deploy AI models by setting `AI_PROJECT_DEPLOYMENTS` with a list of model deployment configs,
-* provision additional resources (Azure AI Search, Bing Search) by setting `AI_PROJECT_DEPENDENT_RESOURCES`,
-* enable monitoring by setting `ENABLE_MONITORING=true` (default on),
-* provision connections by setting `AI_PROJECT_CONNECTIONS` with a list of connection configs.
+| Tool | Install |
+|------|---------|
+| **.NET 10 SDK** | https://dotnet.microsoft.com/download |
+| **Azure CLI (`az`)** | https://learn.microsoft.com/cli/azure/install-azure-cli |
+| **Azure Developer CLI (`azd`)** | https://aka.ms/install-azd |
+| **Docker Desktop** | https://docs.docker.com/get-docker/ |
+| **Azure subscription** | With access to Microsoft Foundry |
 
-## Getting Started
+## Quick Start
 
-Note: this repository is not meant to be cloned, but to be consumed as a template in your own project:
+### 1. Setup Azure resources
+
+```powershell
+./setup.ps1
+```
+
+This provisions the Microsoft Foundry project, Azure OpenAI deployment, and supporting infrastructure. You'll be prompted for a subscription and region.
+
+### 2. Log in to Azure
+
+After setup completes, run the `az login` command shown in the output:
+
+```powershell
+az login --tenant <your-tenant-id>
+```
+
+### 3. Run the agent
+
+```powershell
+cd src/time-zone-agent
+dotnet run
+```
+
+You'll see:
+```
+TimeZoneAgent running on http://localhost:8088
+```
+
+## How to Use
+
+Test the agent with any REST client. Open `test.http` in VS Code with the REST Client extension, or use `curl`:
 
 ```bash
-azd init --template Azure-Samples/ai-foundry-starter-basic
+curl -X POST http://localhost:8088/responses \
+  -H "Content-Type: application/json" \
+  -d '{"input": "What time is it in Tokyo?"}'
 ```
 
-### Prerequisites
+The agent will:
+1. Parse your question
+2. Decide to call `GetCurrentDateTime("Asia/Tokyo")`
+3. Return the current time in that timezone
 
-* Install [azd](https://aka.ms/install-azd)
-  * Windows: `winget install microsoft.azd`
-  * Linux: `curl -fsSL https://aka.ms/install-azd.sh | bash`
-  * MacOS: `brew tap azure/azd && brew install azd`
+Try these:
+- "What time is it in London?"
+- "What's the current time in New York and Sydney?"
+- "Tell me the time in UTC"
 
-### Quickstart
+## Function Tool
 
-1. Bring down the template code:
+The `GetCurrentDateTime` tool:
 
-    ```shell
-    azd init --template Azure-Samples/ai-foundry-starter-basic
-    ```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `ianaTimezone` | string | IANA timezone identifier (e.g., `America/New_York`, `Asia/Tokyo`, `Europe/London`, `UTC`) |
 
-    This will perform a git clone
+**Returns:** Formatted current time in the specified timezone.
 
-2. Sign into your Azure account:
+Accepts any timezone from `TimeZoneInfo.GetSystemTimeZones()`.
 
-    ```shell
-    azd auth login
-    ```
+## Local vs Cloud Mode
 
-3. Download a sample agent from GitHub:
+| Mode | Command | Where agent runs |
+|------|---------|------------------|
+| **Local** | `dotnet run` from `src/time-zone-agent/` | Your machine (debugging + fast iteration) |
+| **Cloud** | `./deploy.ps1` | Microsoft Foundry container (production) |
 
-    ```shell
-    azd ai agent init -m <repo-path-to-agent.yaml>
-    ```
+In both modes, the agent calls Azure OpenAI for LLM inference. The agent container location is the difference.
 
-You'll find agent samples in the [`foundry-samples` repo](https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents).
+## Deploy to Azure
 
-## Guidance
+After verifying locally that everything works:
 
-### Region Availability
+```powershell
+./deploy.ps1
+```
 
-This template does not use specific models. The model deployments are a parameter of the template. Each model may not be available in all Azure regions. Check for [up-to-date region availability of Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/reference/region-support) and in particular the [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/model-region-support?tabs=global-standard).
+This:
+1. Builds the Docker container
+2. Pushes it to Azure Container Registry
+3. Deploys it as a hosted agent in Microsoft Foundry
 
-## Resource Clean-up
+Test your deployed agent in the [Microsoft Foundry Playground](https://ai.azure.com).
 
-To prevent incurring unnecessary charges, it's important to clean up your Azure resources after completing your work with the application.
+## Project Structure
 
-- **When to Clean Up:**
-  - After you have finished testing or demonstrating the application.
-  - If the application is no longer needed or you have transitioned to a different project or environment.
-  - When you have completed development and are ready to decommission the application.
+```
+scenario-1-intro/
+├── src/
+│   └── time-zone-agent/
+│       ├── Program.cs          # Single-file agent (hosting adapter + tools)
+│       ├── Dockerfile          # Container definition
+│       └── *.csproj            # Project file
+├── setup.ps1                   # Provision Azure resources
+├── deploy.ps1                  # Deploy agent to Azure
+├── cleanup.ps1                 # Tear down Azure resources
+├── azure.yaml                  # azd project definition
+├── test.http                   # REST Client test requests
+└── README.md                   # This file
+```
 
-- **Deleting Resources:**
-  To delete all associated resources and shut down the application, execute the following command:
-  
-    ```bash
-    azd down
-    ```
+## Troubleshooting
 
-    Please note that this process may take up to 20 minutes to complete.
+| Problem | Solution |
+|---------|----------|
+| `dotnet run` fails with "AZURE_OPENAI_ENDPOINT not set" | Run `./setup.ps1` first to provision Azure resources and configure secrets |
+| `az login` fails | Ensure you have a valid Azure subscription and access to Microsoft Foundry in your region |
+| Port 8088 already in use | Kill the process: `Get-Process -Name "dotnet" \| Stop-Process` or use `netstat -ano \| findstr :8088` |
+| Agent doesn't call the tool | Check the agent instructions in `Program.cs` — the LLM may not recognize the timezone format. Try "the current time in Tokyo" instead of "time in Asia/Tokyo" |
+| Deployed agent unreachable | Verify the agent deployed successfully: `az ai agent show --agent-id <id>` and check Microsoft Foundry for runtime errors |
 
-⚠️ Alternatively, you can delete the resource group directly from the Azure Portal to clean up resources.
+## Clean Up
 
-### Costs
+Remove all Azure resources and local configuration:
 
-Pricing varies per region and usage, so it isn't possible to predict exact costs for your usage.
-The majority of the Azure resources used in this infrastructure are on usage-based pricing tiers.
+```powershell
+./cleanup.ps1
+```
 
-You can try the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator) for the resources deployed in this template.
+This runs `azd down --purge --force` and clears .NET User Secrets.
 
-* **Microsoft Foundry**: Standard tier. [Pricing](https://azure.microsoft.com/pricing/details/ai-foundry/)
-* **Azure AI Services**: S0 tier, defaults to gpt-4o-mini. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
-* **Azure Container Registry**: Basic SKU. Price is per day and on storage. [Pricing](https://azure.microsoft.com/en-us/pricing/details/container-registry/)
-* **Azure Storage Account**: Standard tier, LRS. Pricing is based on storage and operations. [Pricing](https://azure.microsoft.com/pricing/details/storage/blobs/)
-* **Log analytics**: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
-* **Azure AI Search**: Basic tier, LRS. Price is per day and based on transactions. [Pricing](https://azure.microsoft.com/en-us/pricing/details/search/)
-* **Grounding with Bing Search**: G1 tier. Costs based on transactions. [Pricing](https://www.microsoft.com/en-us/bing/apis/grounding-pricing)
+---
 
-⚠️ To avoid unnecessary costs, remember to take down your app if it's no longer in use, either by deleting the resource group in the Portal or running `azd down`.
-
-### Security guidelines
-
-This template also uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for local development and deployment.
-
-To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
-
-You may want to consider additional security measures, such as:
-
-- Enabling Microsoft Defender for Cloud to [secure your Azure resources](https://learn.microsoft.com/azure/defender-for-cloud/).
-- Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
-
-> **Important Security Notice** <br/>
-This template, the application code and configuration it contains, has been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features.  <br/><br/>
-For a more comprehensive list of best practices and security recommendations for Intelligent Applications, [visit our official documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/).
-
-## Additional Disclaimers
-
-**Trademarks** This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft’s Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.
-
-To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, “Microsoft Products and Services”), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services.
-
-You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit <https://aka.ms/exporting>.
-
-You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer’s implementation of the Online Services.
-
-You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgement of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.  
-
-BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, “HIGH-RISK USE”), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK.
+> **↑ Back to [root README](../README.md)** · [Scenario 2 — Data Crunch](../scenario-2-data-crunch/README.md) · [Scenario 3 — Image Gen](../scenario-3-image-gen/README.md)
