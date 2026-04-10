@@ -25,3 +25,7 @@
 - Test paths: `scenario-{1,2,3}/tests/{TimeZoneAgent,DataCrunchAgent,ImageGenAgent}.Tests/`
 - For top-level Program.cs agents (scenarios 1 & 3), tests replicate the logic locally rather than referencing the Exe
 - Phase 1 delivered 65 xunit tests across 3 scenarios with full solution file integration
+- Top-level Program.cs files use `LoggerFactory.Create(builder => builder.AddConsole())` for structured logging (no DI available)
+- All 3 scenario projects depend on `Microsoft.Extensions.Logging` + `Microsoft.Extensions.Logging.Console` v9.0.4
+- Credential init wrapped in try-catch for `AuthenticationFailedException` (from Azure.Identity) — logs + rethrows
+- AgentService.cs catch block narrowed from bare `catch` to `catch (JsonException ex)` with LogWarning

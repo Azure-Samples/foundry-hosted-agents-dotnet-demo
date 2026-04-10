@@ -45,9 +45,9 @@ public class AgentService(HttpClient httpClient, ILogger<AgentService> logger, I
 
             return new AgentResponse { Analysis = outputText, RawJson = json };
         }
-        catch
+        catch (JsonException ex)
         {
-            // If parsing fails, return raw response
+            logger.LogWarning(ex, "Failed to deserialize agent response as ResponsesApiResponse ({Length} chars)", json.Length);
             return new AgentResponse { Analysis = json, RawJson = json };
         }
     }

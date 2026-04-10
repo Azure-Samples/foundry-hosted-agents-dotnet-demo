@@ -20,6 +20,11 @@ using ElBruno.Text2Image.Models;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+// Structured logging for the agent process
+using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger("ImageGeneratorAgent");
 
 // Configuration from User Secrets (local dev) + environment variables (deployed container)
 var config = new ConfigurationBuilder()
@@ -30,15 +35,25 @@ var config = new ConfigurationBuilder()
 var endpoint = config["AZURE_OPENAI_ENDPOINT"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set. Run setup.ps1 or: dotnet user-secrets set AZURE_OPENAI_ENDPOINT <your-endpoint>");
 var deploymentName = config["AZURE_OPENAI_DEPLOYMENT_NAME"] ?? "gpt-5-mini";
+
 // Credential: AzureCliCredential for local dev (respects az login --tenant),
 // DefaultAzureCredential in containers (uses managed identity).
-TokenCredential credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
-    ? new DefaultAzureCredential()
-    : new AzureCliCredential();
+TokenCredential credential;
+try
+{
+    credential = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+        ? new DefaultAzureCredential()
+        : new AzureCliCredential();
+}
+catch (AuthenticationFailedException ex)
+{
+    logger.LogCritical(ex, "Authentication failed. Run: az login --tenant <your-tenant-id>");
+    throw;
+}
 
-Console.WriteLine($"Endpoint: {endpoint}");
-Console.WriteLine($"Model: {deploymentName}");
-Console.WriteLine($"Auth: {credential.GetType().Name}");
+logger.LogInformation("Endpoint: {Endpoint}", endpoint);
+logger.LogInformation("Model: {Model}", deploymentName);
+logger.LogInformation("Auth: {CredentialType}", credential.GetType().Name);
 
 // FUNCTION TOOLS — Three tools demonstrating GPU-backed server-side computation.
 // The model decides which tool to call based on user intent.
@@ -83,7 +98,8 @@ async Task<string> GenerateImageFlux(
     response.EnsureSuccessStatusCode();
 
     var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-    var imageUrl = json.GetProperty("data")[0].GetProperty("url").GetString()!;
+    var imageUrl = json.GetProperty("data")[0].GetProperty("url").GetString()
+        ?? throw new InvalidOperationException("FLUX.2 response did not contain an image URL in data[0].url");
 
     // Download and save the generated image
     var imageBytes = await httpClient.GetByteArrayAsync(imageUrl);
@@ -135,5 +151,5 @@ var agent = new ChatClientAgent(chatClient,
 
 // HOSTING ADAPTER — Same pattern as scenario-1, serves the agent on port 8088.
 // When deployed to Azure, this runs in a GPU workload profile container.
-Console.WriteLine("Image Generator Agent running on http://localhost:8088");
+logger.LogInformation("{AgentName} running on {Url}", "ImageGeneratorAgent", "http://localhost:8088");
 await agent.RunAIAgentAsync(telemetrySourceName: "Agents");
